@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include <time.h> // Biblioteca necessaria para random
 #include <stdlib.h>
+#include <string.h>
 
 #define ENTER 10
 #define LARGURA_TELA 800
@@ -16,9 +17,18 @@
 #define MARGEM_JOGO_Y 50 // Margem da área do jogo em si (sem barras em cima ou em baixo)
 #define MARGEM_JOGO_X 10
 
+#define TAMANHO_FONTE 30
 #define TAMANHO_JOGADOR 15
+#define TAMANHO_STR 20
+
+#define NUM_ITEMS_MENU 4
+
+#define NUM_COGUMELOS 60
+#define NUM_VIDAS 3
+#define NUM_TIROS 200
 
 void desenha_moldura() {
+
     int i;
 
     for(i = MARGEM_JOGO_X; i < LARGURA_TELA - MARGEM_JOGO_X; i++) {
@@ -38,6 +48,42 @@ void desenha_moldura() {
     }
 }
 
+void desenha_menu_superior(){
+
+    char itens_menu[NUM_ITEMS_MENU][TAMANHO_STR] = {"ESC-Sair", "C-Carregar", "P-Pausar", "R-Ranking"};
+    int i;
+    float pos = 0;
+
+    // Loop para desenho do menu.
+    for(i = 0; i < NUM_ITEMS_MENU; i++){
+        DrawText(itens_menu[i], MARGEM_JOGO_X + (LARGURA_TELA) * pos, 10, TAMANHO_FONTE, WHITE);
+        pos = pos + 0.25;
+    }
+}
+
+void desenha_menu_inferior(int *pontos, int *cogumelos_restantes, int *vidas, int *tiros){
+
+    char itens_menu[NUM_ITEMS_MENU * 2][TAMANHO_STR] = {"PTS", "", "COG", "", "VDS", "", "TRS", ""};
+    int i;
+    float pos = 0;
+
+    // Conversão de int para str
+    sprintf(itens_menu[1], "%d", *pontos);
+    sprintf(itens_menu[3], "%d", *cogumelos_restantes);
+    sprintf(itens_menu[5], "%d", *vidas);
+    sprintf(itens_menu[7], "%d", *tiros);
+
+    // Loop para desenho do menu. Texto em cinza, números em branco.
+    for(i = 0; i < NUM_ITEMS_MENU * 2; i++){
+        if(i % 2 == 0){
+            DrawText(itens_menu[i], MARGEM_JOGO_X + (LARGURA_TELA) * pos, ALTURA_TELA - MARGEM_JOGO_Y + 10, TAMANHO_FONTE, GRAY);
+        } else {
+            DrawText(itens_menu[i], MARGEM_JOGO_X + (LARGURA_TELA) * pos, ALTURA_TELA - MARGEM_JOGO_Y + 10, TAMANHO_FONTE, WHITE);
+        }
+
+        pos = pos + 0.125;
+    }
+}
 
 void movimenta_jogador(int *posicao_x, int *posicao_y) {
 
@@ -49,7 +95,7 @@ void movimenta_jogador(int *posicao_x, int *posicao_y) {
 
             break;
         case KEY_LEFT:
-            if (*posicao_x > MARGEM_JOGO_X + DIMENSAO_RETANGULO_BORDA ) {
+            if (*posicao_x > MARGEM_JOGO_X + DIMENSAO_RETANGULO_BORDA) {
                 *posicao_x -= MOVIMENTO;
             }
 
@@ -75,7 +121,6 @@ void movimenta_jogador(int *posicao_x, int *posicao_y) {
         default:
             break;
     }
-    printf("\n%d   %d", *posicao_x, *posicao_y);
 }
 
 
@@ -98,8 +143,9 @@ void desenha_jogador(int *posicao_x, int *posicao_y) {
 int main() {
 
     int posicao_x = LARGURA_TELA / 2, posicao_y = ALTURA_TELA * 0.80;
+    int pontos = 0, cogumelos_restantes = NUM_COGUMELOS, vidas = NUM_VIDAS, tiros = NUM_TIROS;
 
-    InitWindow(LARGURA_TELA, ALTURA_TELA, "milipede");
+    InitWindow(LARGURA_TELA, ALTURA_TELA, "millipede");
     SetTargetFPS(15);
 
     while (!WindowShouldClose()) {
@@ -109,6 +155,9 @@ int main() {
         ClearBackground(BLACK);
 
         desenha_moldura();
+        desenha_menu_superior();
+        desenha_menu_inferior(&pontos, &cogumelos_restantes, &vidas, &tiros);
+
         gera_cogumelos();
 
         desenha_jogador(&posicao_x, &posicao_y);
