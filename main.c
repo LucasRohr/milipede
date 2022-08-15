@@ -48,9 +48,8 @@ void desenha_moldura() {
     }
 }
 
-void desenha_menu_superior(){
+void desenha_menu_superior(char itens_menu[][TAMANHO_STR]){
 
-    char itens_menu[NUM_ITEMS_MENU][TAMANHO_STR] = {"ESC-Sair", "C-Carregar", "P-Pausar", "R-Ranking"};
     int i;
     float pos = 0;
 
@@ -61,17 +60,16 @@ void desenha_menu_superior(){
     }
 }
 
-void desenha_menu_inferior(int *pontos, int *cogumelos_restantes, int *vidas, int *tiros){
+void desenha_menu_inferior(char itens_menu[][TAMANHO_STR], int pontos, int cogumelos_restantes, int vidas, int tiros){
 
-    char itens_menu[NUM_ITEMS_MENU * 2][TAMANHO_STR] = {"PTS", "", "COG", "", "VDS", "", "TRS", ""};
     int i;
     float pos = 0;
 
     // Conversão de int para str
-    sprintf(itens_menu[1], "%d", *pontos);
-    sprintf(itens_menu[3], "%d", *cogumelos_restantes);
-    sprintf(itens_menu[5], "%d", *vidas);
-    sprintf(itens_menu[7], "%d", *tiros);
+    sprintf(itens_menu[1], "%d", pontos);
+    sprintf(itens_menu[3], "%d", cogumelos_restantes);
+    sprintf(itens_menu[5], "%d", vidas);
+    sprintf(itens_menu[7], "%d", tiros);
 
     // Loop para desenho do menu. Texto em cinza, números em branco.
     for(i = 0; i < NUM_ITEMS_MENU * 2; i++){
@@ -145,6 +143,9 @@ int main() {
     int posicao_x = LARGURA_TELA / 2, posicao_y = ALTURA_TELA * 0.80;
     int pontos = 0, cogumelos_restantes = NUM_COGUMELOS, vidas = NUM_VIDAS, tiros = NUM_TIROS;
 
+    char itens_menu_superior[NUM_ITEMS_MENU][TAMANHO_STR] = {"ESC-Sair", "C-Carregar", "P-Pausar", "R-Ranking"};
+    char itens_menu_inferior[NUM_ITEMS_MENU * 2][TAMANHO_STR] = {"PTS", "", "COG", "", "VDS", "", "TRS", ""};
+
     InitWindow(LARGURA_TELA, ALTURA_TELA, "millipede");
     SetTargetFPS(15);
 
@@ -155,8 +156,8 @@ int main() {
         ClearBackground(BLACK);
 
         desenha_moldura();
-        desenha_menu_superior();
-        desenha_menu_inferior(&pontos, &cogumelos_restantes, &vidas, &tiros);
+        desenha_menu_superior(itens_menu_superior);
+        desenha_menu_inferior(itens_menu_inferior, pontos, cogumelos_restantes, vidas, tiros);
 
         gera_cogumelos();
 
