@@ -177,7 +177,7 @@ void gera_cogumelos(int pos_cogumelos[][2]) {
 
     while (i < NUM_COGUMELOS){
         x = gera_posicao_cogumelos(MARGEM_JOGO_X + DIMENSAO_RETANGULO_BORDA + TAMANHO_COGUMELO, LARGURA_TELA - MARGEM_JOGO_X - DIMENSAO_RETANGULO_BORDA);
-        y = gera_posicao_cogumelos(MARGEM_JOGO_Y + DIMENSAO_RETANGULO_BORDA + TAMANHO_COGUMELO * 2, ALTURA_TELA - MARGEM_JOGO_Y - DIMENSAO_RETANGULO_BORDA - TAMANHO_JOGADOR - TAMANHO_COGUMELO);
+        y = gera_posicao_cogumelos(MARGEM_JOGO_Y + DIMENSAO_RETANGULO_BORDA + TAMANHO_JOGADOR * 2, ALTURA_TELA - MARGEM_JOGO_Y - DIMENSAO_RETANGULO_BORDA - TAMANHO_JOGADOR * 2);
         // Verifica se a posição já está ocupada. Se não, gera uma nova posição para o cogumelo.
         if (!verifica_posicao_cogumelos(pos_cogumelos, NUM_COGUMELOS, x, y)){
             pos_cogumelos[i][0] = x;
