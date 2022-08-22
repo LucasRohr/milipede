@@ -3,33 +3,7 @@
 #include <time.h> // Biblioteca necessaria para random
 #include <stdlib.h>
 #include <string.h>
-
-#define ENTER 10
-#define LARGURA_TELA 810
-#define ALTURA_TELA 640
-
-#define MOVIMENTO 4
-#define ESC 27
-
-#define DIMENSAO_RETANGULO_BORDA 5
-#define MARGEM_RETANGULO_BORDA 10
-
-#define MARGEM_JOGO_Y 50 // Margem da área do jogo em si (sem barras em cima ou em baixo)
-#define MARGEM_JOGO_X 10
-
-#define TAMANHO_FONTE 30
-#define TAMANHO_STR 20
-
-#define TAMANHO_JOGADOR 15
-#define TAMANHO_COGUMELO 15
-
-#define MARGEM_COGUMELO 5
-
-#define NUM_ITEMS_MENU 4
-
-#define NUM_COGUMELOS 60
-#define NUM_VIDAS 3
-#define NUM_TIROS 200
+#include "definicoes.h"
 
 void desenha_moldura() {
     int i;
@@ -67,13 +41,13 @@ void desenha_menu_inferior(char itens_menu[][TAMANHO_STR], int pontos, int cogum
     int i;
     float pos = 0;
 
-    // Conversão de int para str
+    // Conversï¿½o de int para str
     sprintf(itens_menu[1], "%d", pontos);
     sprintf(itens_menu[3], "%d", cogumelos_restantes);
     sprintf(itens_menu[5], "%d", vidas);
     sprintf(itens_menu[7], "%d", tiros);
 
-    // Loop para desenho do menu. Texto em cinza, números em branco.
+    // Loop para desenho do menu. Texto em cinza, nï¿½meros em branco.
     for(i = 0; i < NUM_ITEMS_MENU * 2; i++){
         if(i % 2 == 0){
             DrawText(itens_menu[i], MARGEM_JOGO_X + (LARGURA_TELA) * pos, ALTURA_TELA - MARGEM_JOGO_Y + 10, TAMANHO_FONTE, GRAY);
@@ -96,8 +70,8 @@ int verifica_colisao_cogumelos(int posicao_x, int posicao_y, int tamanho_objeto,
 }
 
 int verifica_movimento(int posicao_x, int posicao_y, int pos_cogumelos[][2]){
-    // Verifica se é possível o jogador fazer algum movimento. !!!Recebe a nova posicao, nao a atual!!!
-    // Retorna 1 se o movimento é possível, 0 se não
+    // Verifica se ï¿½ possï¿½vel o jogador fazer algum movimento. !!!Recebe a nova posicao, nao a atual!!!
+    // Retorna 1 se o movimento ï¿½ possï¿½vel, 0 se nï¿½o
     int flag = 1;
 
     if(posicao_x > LARGURA_TELA - MARGEM_JOGO_X - TAMANHO_JOGADOR){
@@ -151,7 +125,7 @@ void movimenta_jogador(int *posicao_x, int *posicao_y, int pos_cogumelos[][2]) {
 int verifica_posicao_cogumelos(int pos_cogumelos[][2], int tamanho_array, int x, int y){
     int i = 0, flag = 0;
 
-    // Se as coordenadas recebidas já estão ocupadas por um cogumelo, retorna 1, senão 0. Para de percorrer o array quando chega ao final, ou encontra o valor 0.
+    // Se as coordenadas recebidas jï¿½ estï¿½o ocupadas por um cogumelo, retorna 1, senï¿½o 0. Para de percorrer o array quando chega ao final, ou encontra o valor 0.
     while(i < tamanho_array && pos_cogumelos[i][0] != 0){
         if (pos_cogumelos[i][0] == x && pos_cogumelos[i][1] == y){
             flag = 1;
@@ -162,12 +136,12 @@ int verifica_posicao_cogumelos(int pos_cogumelos[][2], int tamanho_array, int x,
 }
 
 int gera_posicao_random(int valor_minimo, int valor_maximo) {
-    // Gera valores aleatórios entre o valor minimo e maximo
+    // Gera valores aleatï¿½rios entre o valor minimo e maximo
     return (int) (rand() % (valor_maximo - valor_minimo + 1) + valor_minimo);
 }
 
 int gera_posicao_cogumelos(int valor_minimo, int valor_maximo) {
-    // Gera valores aleatórios, divisiveis pelo tamanho dos cogumelos + sua margem (para eles ficarem em seus próprios tiles)
+    // Gera valores aleatï¿½rios, divisiveis pelo tamanho dos cogumelos + sua margem (para eles ficarem em seus prï¿½prios tiles)
     return (int) (rand() % (valor_maximo - valor_minimo + 1) + valor_minimo) / (TAMANHO_COGUMELO + MARGEM_COGUMELO) * (TAMANHO_COGUMELO + MARGEM_COGUMELO);
 }
 
@@ -178,7 +152,8 @@ void gera_cogumelos(int pos_cogumelos[][2]) {
     while (i < NUM_COGUMELOS){
         x = gera_posicao_cogumelos(MARGEM_JOGO_X + DIMENSAO_RETANGULO_BORDA + TAMANHO_COGUMELO, LARGURA_TELA - MARGEM_JOGO_X - DIMENSAO_RETANGULO_BORDA);
         y = gera_posicao_cogumelos(MARGEM_JOGO_Y + DIMENSAO_RETANGULO_BORDA + TAMANHO_JOGADOR * 2, ALTURA_TELA - MARGEM_JOGO_Y - DIMENSAO_RETANGULO_BORDA - TAMANHO_JOGADOR * 2);
-        // Verifica se a posição já está ocupada. Se não, gera uma nova posição para o cogumelo.
+        
+        // Verifica se a posiï¿½ï¿½o jï¿½ estï¿½ ocupada. Se nï¿½o, gera uma nova posiï¿½ï¿½o para o cogumelo.
         if (!verifica_posicao_cogumelos(pos_cogumelos, NUM_COGUMELOS, x, y)){
             pos_cogumelos[i][0] = x;
             pos_cogumelos[i][1] = y;
@@ -201,22 +176,220 @@ void desenha_cogumelos(int pos_cogumelos[][2]){
     }
 }
 
-int main() {
+// Funcoes para Aranhas
 
+void gera_aranha(ARANHA *aranha) {
+    float x_random = (float) (rand() / (double) RAND_MAX * LARGURA_TELA);
+    float y_random = (float) (rand() / (double) RAND_MAX * (ALTURA_TELA * 0.75));
+
+    (*aranha).posicao.x = x_random;
+    (*aranha).posicao.y = y_random;
+    (*aranha).status = 1;
+    (*aranha).dir = cima;
+}
+
+void inverte_movimento(ARANHA *aranha) {
+    DIRECAO direcao_aranha = (*aranha).dir;
+
+    switch(direcao_aranha) {
+        case(cima):
+            (*aranha).dir = (int) (rand() % (esq_baixo - dir_baixo + 1)) + dir_baixo;
+            break;
+        case(dir_cima):
+            (*aranha).dir = (int) (rand() % (esq_cima - dir_baixo + 1)) + dir_baixo;
+            break;
+        case(dir):
+            (*aranha).dir = (int) (rand() % (esq_cima - esq_baixo + 1)) + esq_baixo;
+            break;
+        case(dir_baixo):
+            (*aranha).dir = (int) (rand() % (esq_cima - esq_baixo + 1)) + esq_baixo;
+            break;
+        case(baixo):
+            (*aranha).dir = esq_cima;
+            break;
+        case(esq_baixo):
+            (*aranha).dir = (int) (rand() % (dir_baixo - cima + 1)) + cima;
+            break;
+        case(esq):
+            (*aranha).dir = (int) (rand() % (dir_baixo - dir_cima + 1)) + dir_cima;
+            break;
+        case(esq_cima):
+            (*aranha).dir = (int) (rand() % (esq_baixo - dir_cima + 1)) + dir_cima;
+            break;
+        default:
+            break;
+    }
+}
+
+int checa_colisao_aranha(int x_elemento, int y_elemento, int x_obstaculo, int y_obstaculo) {
+    if (x_elemento == x_obstaculo || y_elemento == y_obstaculo) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+void move_aranha(ARANHA *aranha) {
+    DIRECAO direcao_aranha = (*aranha).dir;
+
+    switch(direcao_aranha) {
+        case cima:
+            (*aranha).posicao.y += 1.0;
+
+            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, LARGURA_TELA, ALTURA_TELA)) {
+                inverte_movimento(aranha);
+            }
+
+            break;
+        case dir_cima:
+            (*aranha).posicao.x += 1.0;
+            (*aranha).posicao.y += 1.0;
+
+            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, LARGURA_TELA, ALTURA_TELA)) {
+                inverte_movimento(aranha);
+            }
+
+            break;
+        case dir:
+            (*aranha).posicao.x += 1.0;
+
+            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, LARGURA_TELA, ALTURA_TELA)) {
+                inverte_movimento(aranha);
+            }
+
+            break;
+        case dir_baixo:
+            (*aranha).posicao.x += 1.0;
+            (*aranha).posicao.y -= 1.0;
+
+            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, LARGURA_TELA, 0)) {
+                inverte_movimento(aranha);
+            }
+
+            break;
+        case baixo:
+            (*aranha).posicao.y -= 1.0;
+
+            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, 0, 0)) {
+                inverte_movimento(aranha);
+            }
+
+            break;
+        case esq_baixo:
+            (*aranha).posicao.x -= 1.0;
+            (*aranha).posicao.y -= 1.0;
+
+            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, 0, 0)) {
+                inverte_movimento(aranha);
+            }
+
+            break;
+        case esq:
+            (*aranha).posicao.x -= 1.0;
+
+            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, 0, 0)) {
+                inverte_movimento(aranha);
+            }
+
+            break;
+        case esq_cima:
+            (*aranha).posicao.y += 1.0;
+            (*aranha).posicao.x -= 1.0;
+
+            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, 0, ALTURA_TELA)) {
+                inverte_movimento(aranha);
+            }
+
+            break;
+        default:
+            break;
+    }
+}
+
+void gera_fazendeiro(FAZENDEIRO *fazendeiro) {
+    (*fazendeiro).tiros = NUM_TIROS;
+    (*fazendeiro).vidas = NUM_VIDAS;
+    (*fazendeiro).cogumelos_colhidos = 0;
+    (*fazendeiro).doente = 0;
+
+    (*fazendeiro).posicao.x = (float) (rand() / (double) RAND_MAX * LARGURA_TELA);
+    (*fazendeiro).posicao.y = (float) (rand() / (double) RAND_MAX * ALTURA_TELA);
+}
+
+int testa_colisao_aranha_fazendeiro(ARANHA aranha, FAZENDEIRO fazendeiro) {
+    float x_aranha = aranha.posicao.x;
+    float y_aranha = aranha.posicao.y;
+
+    float x_fazendeiro = fazendeiro.posicao.x;
+    float y_fazendeiro = fazendeiro.posicao.y;
+
+     if (x_aranha == x_fazendeiro && y_aranha == y_fazendeiro) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+void testa_colisao_aranha_base(ARANHA *aranha) {
+    if ((*aranha).posicao.y == 0) {
+        (*aranha).status = 0;
+    }
+}
+
+void move_aranhas(FAZENDEIRO *fazendeiro, ARANHA aranhas[], int total_aranhas) {
+    int i;
+
+    for(i = 0; i < total_aranhas; i++) {
+        move_aranha(&(aranhas[i]));
+
+        (*fazendeiro).doente += testa_colisao_aranha_fazendeiro(aranhas[i], *fazendeiro);
+
+        testa_colisao_aranha_base(&(aranhas[i]));
+
+        WaitTime(1000);
+    }
+}
+
+void gera_todas_aranhas(ARANHA aranhas[], int total_aranhas) {
+    int i;
+
+    for(i = 0; i < total_aranhas; i++) {
+        gera_aranha(&(aranhas[i]));
+    }
+}
+
+void desenha_aranhas(ARANHA aranhas[], int total_aranhas) {
+    int i;
+
+    for(i = 0; i < total_aranhas; i++) {
+        DrawRectangle(aranhas[i].posicao.x, aranhas[i].posicao.y, TAMANHO_ARANHA, TAMANHO_ARANHA, BLUE);
+    }
+}
+
+// === Fim das Funcoes para Aranhas ===
+
+int main() {
     int posicao_x = LARGURA_TELA / 2, posicao_y = ALTURA_TELA - MARGEM_JOGO_Y - DIMENSAO_RETANGULO_BORDA - TAMANHO_JOGADOR;
     int pontos = 0, cogumelos_restantes = NUM_COGUMELOS, vidas = NUM_VIDAS, tiros = NUM_TIROS;
 
     char itens_menu_superior[NUM_ITEMS_MENU][TAMANHO_STR] = {"ESC-Sair", "C-Carregar", "P-Pausar", "R-Ranking"};
     char itens_menu_inferior[NUM_ITEMS_MENU * 2][TAMANHO_STR] = {"PTS", "", "COG", "", "VDS", "", "TRS", ""};
 
+    ARANHA aranhas[NUM_ARANHAS];
+    FAZENDEIRO fazendeiro;
+
     int pos_cogumelos[NUM_COGUMELOS][2] = {};
+
+    gera_fazendeiro(&fazendeiro);
     gera_cogumelos(pos_cogumelos);
+    gera_todas_aranhas(aranhas, NUM_ARANHAS);
 
     InitWindow(LARGURA_TELA, ALTURA_TELA, "millipede");
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
         movimenta_jogador(&posicao_x, &posicao_y, pos_cogumelos);
+        move_aranhas(&fazendeiro, aranhas, NUM_ARANHAS);
 
         BeginDrawing();
         ClearBackground(BLACK);
@@ -227,6 +400,7 @@ int main() {
 
         desenha_jogador(&posicao_x, &posicao_y);
         desenha_cogumelos(pos_cogumelos);
+        desenha_aranhas(aranhas, NUM_ARANHAS);
 
         EndDrawing();
     }
