@@ -5,57 +5,6 @@
 #include <string.h>
 #include "definicoes.h"
 
-#define ENTER 10
-#define LARGURA_TELA 810
-#define ALTURA_TELA 640
-#define FRAMERATE 60
-
-#define MOVIMENTO 3
-#define ESC 27
-
-#define DIMENSAO_RETANGULO_BORDA 5
-#define MARGEM_RETANGULO_BORDA 10
-
-#define MARGEM_JOGO_Y 50 // Margem da �rea do jogo em si (sem barras em cima ou em baixo)
-#define MARGEM_JOGO_X 10
-
-#define TAMANHO_FONTE 30
-#define TAMANHO_STR 30
-
-#define TAMANHO_JOGADOR 15
-#define TAMANHO_COGUMELO 15
-
-#define MARGEM_COGUMELO 5
-
-#define NUM_ITEMS_MENU 4
-
-#define NUM_COGUMELOS 60
-#define NUM_VIDAS 3
-#define NUM_TIROS 200
-
-// Defini��o estruturas
-
-typedef struct {
-    int x;
-    int y;
-} COORD;
-
-typedef struct {
-    COORD posicao;
-    int direcao;
-    char nome[TAMANHO_STR];
-    int vidas;
-    int tiros;
-    int cogumelos_colhidos;
-    int status;
-    int doente;
-} FAZENDEIRO;
-
-typedef struct {
-    COORD posicao;
-    int status;
-} COGUMELO;
-
 void desenha_moldura() {
     int i;
 
@@ -87,16 +36,15 @@ void desenha_menu_superior(char itens_menu[][TAMANHO_STR]){
     }
 }
 
-void desenha_menu_inferior(char itens_menu[][TAMANHO_STR], FAZENDEIRO fazendeiro, int num_cogumelos){
+void desenha_menu_inferior(char itens_menu[][TAMANHO_STR], FAZENDEIRO *fazendeiro, int num_cogumelos){
     int i;
     float pos = 0;
 
-<<<<<<< HEAD
     // Convers�o de int para str
-    sprintf(itens_menu[1], "%d", fazendeiro.cogumelos_colhidos);
-    sprintf(itens_menu[3], "%d", num_cogumelos - fazendeiro.cogumelos_colhidos);
-    sprintf(itens_menu[5], "%d", fazendeiro.vidas);
-    sprintf(itens_menu[7], "%d", fazendeiro.tiros);
+    sprintf(itens_menu[1], "%d", fazendeiro->cogumelos_colhidos);
+    sprintf(itens_menu[3], "%d", num_cogumelos - fazendeiro->cogumelos_colhidos);
+    sprintf(itens_menu[5], "%d", fazendeiro->vidas);
+    sprintf(itens_menu[7], "%d", fazendeiro->tiros);
 
     // Loop para desenho do menu. Texto em cinza, n�meros em branco.
     for(i = 0; i < NUM_ITEMS_MENU * 2; i++){
@@ -110,16 +58,31 @@ void desenha_menu_inferior(char itens_menu[][TAMANHO_STR], FAZENDEIRO fazendeiro
 }
 
 void desenha_jogador(FAZENDEIRO fazendeiro) {
-    // estudar possibilidade de usar png
-    // tambem pensei em fazer algo mais simples com retangulos pora agora
-    DrawRectangle(fazendeiro.posicao.x, fazendeiro.posicao.y, TAMANHO_JOGADOR, TAMANHO_JOGADOR, RED);
+    Image fazendeiro_imagem = LoadImage("imagens/fazendeiro.png");
+
+    if (fazendeiro.status == paralisado) {
+        ImageColorInvert(&fazendeiro_imagem);
+    }
+
+    Texture2D textura_fazendeiro = LoadTextureFromImage(fazendeiro_imagem); 
+
+    DrawTexture(textura_fazendeiro, fazendeiro.posicao.x, fazendeiro.posicao.y, WHITE);
+
+    UnloadImage(fazendeiro_imagem);
 }
 
 void desenha_cogumelos(COGUMELO cogumelos[], int num_cogumelos){
     int i;
 
+    Image cogumelo_imagem = LoadImage("imagens/cogumelo.png");
+    Texture2D textura_cogumelo = LoadTextureFromImage(cogumelo_imagem); 
+
+    UnloadImage(cogumelo_imagem);
+
     for (i = 0; i < NUM_COGUMELOS; i++){
-        DrawRectangle(cogumelos[i].posicao.x, cogumelos[i].posicao.y, TAMANHO_COGUMELO, TAMANHO_COGUMELO, GREEN);
+        if (cogumelos[i].status == 1) {
+            DrawTexture(textura_cogumelo, cogumelos[i].posicao.x, cogumelos[i].posicao.y, WHITE);
+        }
     }
 }
 
@@ -159,6 +122,7 @@ void gera_cogumelos(COGUMELO cogumelos[], int num_cogumelos) {
         if (!verifica_posicao_cogumelos(cogumelos, num_cogumelos, x, y)){
             cogumelos[i].posicao.x = x;
             cogumelos[i].posicao.y = y;
+            cogumelos[i].status = 1;
             i++;
         }
     }
@@ -171,7 +135,7 @@ void gera_fazendeiro(FAZENDEIRO *fazendeiro){
     fazendeiro->vidas = NUM_VIDAS;
     fazendeiro->tiros = NUM_TIROS;
     fazendeiro->cogumelos_colhidos = 0;
-    fazendeiro->status = 0;
+    fazendeiro->status = livre;
     fazendeiro->doente = 0;
 }
 
@@ -189,14 +153,13 @@ void mostrar_ranking(){
 
 }
 
+// Fun��o geral para verificar colisao. Recebe as coordernadas de dois objetos e seu tamanho.
 int verifica_colisao(COORD pos_a, int a_tam, COORD pos_b, int b_tam){
-    // Fun��o geral para verificar colisao. Recebe as coordernadas de dois objetos e seu tamanho.
-    int flag = 0;
-
-    if((pos_a.x < pos_b.x + b_tam) && (pos_a.x + a_tam > pos_b.x) && pos_a.y < pos_b.y + b_tam && pos_a.y + a_tam > pos_b.y){
-        flag = 1;
+    if((pos_a.x < pos_b.x + b_tam) && (pos_a.x + a_tam > pos_b.x) && (pos_a.y < pos_b.y + b_tam) && (pos_a.y + a_tam > pos_b.y)){
+        return 1;
     }
-    return flag;
+
+    return 0;
 }
 
 int verifica_colisao_cogumelos(COORD posicao, COGUMELO cogumelos[], int num_cogumelos){
@@ -204,19 +167,18 @@ int verifica_colisao_cogumelos(COORD posicao, COGUMELO cogumelos[], int num_cogu
     int i = 0, flag = 0;
 
     for(i = 0; i < num_cogumelos; i++){
-        flag += verifica_colisao(posicao, TAMANHO_JOGADOR, cogumelos[i].posicao, TAMANHO_COGUMELO);
+        if(cogumelos[i].status == 1) {
+            flag += verifica_colisao(posicao, TAMANHO_JOGADOR, cogumelos[i].posicao, TAMANHO_COGUMELO);
+        }
     }
+
     return flag;
 }
 
 int verifica_movimento(COORD posicao, COGUMELO cogumelos[]){
-    // Verifica se � poss�vel o jogador fazer algum movimento. Recebe a nova posicao, nao a atual.
-    // Retorna 1 se o movimento � poss�vel, 0 se n�o
+    // Verifica se é possível o jogador fazer algum movimento. Recebe a nova posicao, nao a atual.
+    // Retorna 1 se o movimento é possível, 0 se não
     int flag = 1;
-=======
-void desenha_cogumelos(COGUMELO cogumelos[], int num_cogumelos){
-    int i;
->>>>>>> main
 
     if(posicao.x > LARGURA_TELA - MARGEM_JOGO_X - TAMANHO_JOGADOR){
         flag = 0; // Verifica se o jogador ultrapassa a parede da direita
@@ -229,7 +191,6 @@ void desenha_cogumelos(COGUMELO cogumelos[], int num_cogumelos){
     } else if(verifica_colisao_cogumelos(posicao, cogumelos, NUM_COGUMELOS)){
         flag = 0; // Verifica se o jogador colide com algum cogumelo
     }
-<<<<<<< HEAD
 
     return flag;
 }
@@ -238,49 +199,54 @@ void movimenta_jogador(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[]) {
     // Fun��o para ler inputs do jogador.
     COORD nova_posicao = {};
 
-    switch(GetKeyPressed()) {
-        case KEY_P:
-            pausar_jogo();
-            break;
-        case KEY_C:
-            carregar_jogo();
-            break;
-        case KEY_R:
-            mostrar_ranking();
-            break;
-        case ESC:
-            CloseWindow();
-            break;
-        default:
-            break;
-    }
+    if (fazendeiro->status == livre) {
+        switch(GetKeyPressed()) {
+            case KEY_P:
+                pausar_jogo();
+                break;
+            case KEY_C:
+                carregar_jogo();
+                break;
+            case KEY_R:
+                mostrar_ranking();
+                break;
+            case ESC:
+                CloseWindow();
+                break;
+            default:
+                break;
+        }
 
-    if(IsKeyDown(KEY_RIGHT)){
-        nova_posicao.x = fazendeiro->posicao.x + MOVIMENTO;
-        nova_posicao.y = fazendeiro->posicao.y;
-        if (verifica_movimento(nova_posicao, cogumelos)) {
-            fazendeiro->posicao = nova_posicao;
+        if(IsKeyDown(KEY_RIGHT)){
+            nova_posicao.x = fazendeiro->posicao.x + MOVIMENTO;
+            nova_posicao.y = fazendeiro->posicao.y;
+            if (verifica_movimento(nova_posicao, cogumelos)) {
+                fazendeiro->posicao = nova_posicao;
+            }
         }
-    }
-    if (IsKeyDown(KEY_LEFT)){
-        nova_posicao.x = fazendeiro->posicao.x - MOVIMENTO;
-        nova_posicao.y = fazendeiro->posicao.y;
-        if (verifica_movimento(nova_posicao, cogumelos)) {
-            fazendeiro->posicao = nova_posicao;
+
+        if (IsKeyDown(KEY_LEFT)){
+            nova_posicao.x = fazendeiro->posicao.x - MOVIMENTO;
+            nova_posicao.y = fazendeiro->posicao.y;
+            if (verifica_movimento(nova_posicao, cogumelos)) {
+                fazendeiro->posicao = nova_posicao;
+            }
         }
-    }
-    if (IsKeyDown(KEY_UP)){
-        nova_posicao.x = fazendeiro->posicao.x;
-        nova_posicao.y = fazendeiro->posicao.y - MOVIMENTO;
-        if (verifica_movimento(nova_posicao, cogumelos)) {
-            fazendeiro->posicao = nova_posicao;
+
+        if (IsKeyDown(KEY_UP)){
+            nova_posicao.x = fazendeiro->posicao.x;
+            nova_posicao.y = fazendeiro->posicao.y - MOVIMENTO;
+            if (verifica_movimento(nova_posicao, cogumelos)) {
+                fazendeiro->posicao = nova_posicao;
+            }
         }
-    }
-    if (IsKeyDown(KEY_DOWN)){
-        nova_posicao.x = fazendeiro->posicao.x;
-        nova_posicao.y = fazendeiro->posicao.y + MOVIMENTO;
-        if (verifica_movimento(nova_posicao, cogumelos)) {
-            fazendeiro->posicao = nova_posicao;
+
+        if (IsKeyDown(KEY_DOWN)){
+            nova_posicao.x = fazendeiro->posicao.x;
+            nova_posicao.y = fazendeiro->posicao.y + MOVIMENTO;
+            if (verifica_movimento(nova_posicao, cogumelos)) {
+                fazendeiro->posicao = nova_posicao;
+            }
         }
     }
 }
@@ -288,124 +254,148 @@ void movimenta_jogador(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[]) {
 // Funcoes para Aranhas
 
 void gera_aranha(ARANHA *aranha) {
-    float x_random = (float) (rand() / (double) RAND_MAX * LARGURA_TELA);
-    float y_random = (float) (rand() / (double) RAND_MAX * (ALTURA_TELA * 0.75));
+    float x_random = (float) (rand() / (double) RAND_MAX * (LARGURA_TELA - (2 * MARGEM_JOGO_X)));
 
-    (*aranha).posicao.x = x_random;
-    (*aranha).posicao.y = y_random;
-    (*aranha).status = 1;
-    (*aranha).dir = cima;
+    aranha->posicao.x = x_random;
+    aranha->posicao.y = MARGEM_JOGO_Y + TAMANHO_ARANHA;
+    aranha->status = 1;
+    aranha->dir =  (int) (rand() % (esq - dir + 1)) + dir_baixo;
 }
 
 void inverte_movimento(ARANHA *aranha) {
-    DIRECAO direcao_aranha = (*aranha).dir;
+    DIRECAO direcao_aranha = aranha->dir;
 
     switch(direcao_aranha) {
         case(cima):
-            (*aranha).dir = (int) (rand() % (esq_baixo - dir_baixo + 1)) + dir_baixo;
+            aranha->dir = (int) (rand() % (esq_baixo - dir_baixo + 1)) + dir_baixo;
             break;
         case(dir_cima):
-            (*aranha).dir = (int) (rand() % (esq_cima - dir_baixo + 1)) + dir_baixo;
+            aranha->dir = (int) (rand() % (esq_cima - dir_baixo + 1)) + dir_baixo;
             break;
         case(dir):
-            (*aranha).dir = (int) (rand() % (esq_cima - esq_baixo + 1)) + esq_baixo;
+            aranha->dir = (int) (rand() % (esq_cima - esq_baixo + 1)) + esq_baixo;
             break;
         case(dir_baixo):
-            (*aranha).dir = (int) (rand() % (esq_cima - esq_baixo + 1)) + esq_baixo;
+            aranha->dir = (int) (rand() % (esq_cima - esq_baixo + 1)) + esq_baixo;
             break;
         case(baixo):
-            (*aranha).dir = esq_cima;
+            aranha->dir = esq_cima;
             break;
         case(esq_baixo):
-            (*aranha).dir = (int) (rand() % (dir_baixo - cima + 1)) + cima;
+            aranha->dir = (int) (rand() % (dir_baixo - cima + 1)) + cima;
             break;
         case(esq):
-            (*aranha).dir = (int) (rand() % (dir_baixo - dir_cima + 1)) + dir_cima;
+            aranha->dir = (int) (rand() % (dir_baixo - dir_cima + 1)) + dir_cima;
             break;
         case(esq_cima):
-            (*aranha).dir = (int) (rand() % (esq_baixo - dir_cima + 1)) + dir_cima;
+            aranha->dir = (int) (rand() % (esq_baixo - dir_cima + 1)) + dir_cima;
             break;
         default:
             break;
     }
 }
 
-int checa_colisao_aranha(int x_elemento, int y_elemento, int x_obstaculo, int y_obstaculo) {
-    if (x_elemento == x_obstaculo || y_elemento == y_obstaculo) {
-        return 1;
-    } else {
-        return 0;
+// Verifica a colisao para cada cogumelo.
+void verifica_colisao_aranha_cogumelos(ARANHA aranha, COGUMELO cogumelos[], int num_cogumelos){
+    int i = 0;
+
+    for(i = 0; i < num_cogumelos; i++) {
+        if(aranha.status == 1 && verifica_colisao(aranha.posicao, TAMANHO_ARANHA, cogumelos[i].posicao, TAMANHO_COGUMELO) ) {
+            cogumelos[i].status = 0;
+        }
     }
 }
 
-void move_aranha(ARANHA *aranha) {
-    DIRECAO direcao_aranha = (*aranha).dir;
+int verifica_movimento_aranha(COORD posicao, COGUMELO cogumelos[], FAZENDEIRO fazendeiro) {
+    // Verifica se é possível a aranha fazer algum movimento. Recebe a nova posicao, nao a atual.
+    // Retorna 1 se colide com um obstaculo, 0 se não
+    int flag = 0;
+
+    if(posicao.x >= LARGURA_TELA - MARGEM_JOGO_X - TAMANHO_ARANHA) {
+        flag = 1; // Verifica se a aranha colide com a parede da direita
+    } else if(posicao.x <= MARGEM_JOGO_X + DIMENSAO_RETANGULO_BORDA) {
+        flag = 1; // Verifica se a aranha colide com a parede da esquerda
+    } else if(posicao.y <= MARGEM_JOGO_Y) {
+        flag = 1; // Verifica se a aranha vai acima do topo da tela
+    } else if(posicao.y >= (ALTURA_TELA - MARGEM_JOGO_Y - TAMANHO_ARANHA)) {
+        flag = 1; // Verifica se a aranha colide a parede de baixo
+    } else if(verifica_colisao(posicao, TAMANHO_ARANHA, fazendeiro.posicao, TAMANHO_ARANHA)) {
+        flag = 1; // Verifica se a aranha colide com o fazendeiro
+    }
+
+    return flag;
+}
+
+void move_aranha(ARANHA *aranha, COGUMELO cogumelos[], FAZENDEIRO fazendeiro) {
+    DIRECAO direcao_aranha = aranha->dir;
+
+    verifica_colisao_aranha_cogumelos(*aranha, cogumelos, NUM_COGUMELOS);
 
     switch(direcao_aranha) {
         case cima:
-            (*aranha).posicao.y += 1.0;
+            aranha->posicao.y += PASSO_ARANHA;
 
-            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, LARGURA_TELA, ALTURA_TELA)) {
+            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
             }
 
             break;
         case dir_cima:
-            (*aranha).posicao.x += 1.0;
-            (*aranha).posicao.y += 1.0;
+            aranha->posicao.x += PASSO_ARANHA;
+            aranha->posicao.y += PASSO_ARANHA;
 
-            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, LARGURA_TELA, ALTURA_TELA)) {
+            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
             }
 
             break;
         case dir:
-            (*aranha).posicao.x += 1.0;
+            aranha->posicao.x += PASSO_ARANHA;
 
-            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, LARGURA_TELA, ALTURA_TELA)) {
+            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
             }
 
             break;
         case dir_baixo:
-            (*aranha).posicao.x += 1.0;
-            (*aranha).posicao.y -= 1.0;
+            aranha->posicao.x += PASSO_ARANHA;
+            aranha->posicao.y -= PASSO_ARANHA;
 
-            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, LARGURA_TELA, 0)) {
+            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
             }
 
             break;
         case baixo:
-            (*aranha).posicao.y -= 1.0;
+            aranha->posicao.y -= PASSO_ARANHA;
 
-            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, 0, 0)) {
+            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
             }
 
             break;
         case esq_baixo:
-            (*aranha).posicao.x -= 1.0;
-            (*aranha).posicao.y -= 1.0;
+            aranha->posicao.x -= PASSO_ARANHA;
+            aranha->posicao.y -= PASSO_ARANHA;
 
-            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, 0, 0)) {
+            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
             }
 
             break;
         case esq:
-            (*aranha).posicao.x -= 1.0;
+            aranha->posicao.x -= PASSO_ARANHA;
 
-            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, 0, 0)) {
+            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
             }
 
             break;
         case esq_cima:
-            (*aranha).posicao.y += 1.0;
-            (*aranha).posicao.x -= 1.0;
+            aranha->posicao.y += PASSO_ARANHA;
+            aranha->posicao.x -= PASSO_ARANHA;
 
-            if(checa_colisao_aranha((*aranha).posicao.x, (*aranha).posicao.y, 0, ALTURA_TELA)) {
+            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
             }
 
@@ -415,47 +405,33 @@ void move_aranha(ARANHA *aranha) {
     }
 }
 
-void gera_fazendeiro(FAZENDEIRO *fazendeiro) {
-    (*fazendeiro).tiros = NUM_TIROS;
-    (*fazendeiro).vidas = NUM_VIDAS;
-    (*fazendeiro).cogumelos_colhidos = 0;
-    (*fazendeiro).doente = 0;
-
-    (*fazendeiro).posicao.x = (float) (rand() / (double) RAND_MAX * LARGURA_TELA);
-    (*fazendeiro).posicao.y = (float) (rand() / (double) RAND_MAX * ALTURA_TELA);
-}
-
-int testa_colisao_aranha_fazendeiro(ARANHA aranha, FAZENDEIRO fazendeiro) {
-    float x_aranha = aranha.posicao.x;
-    float y_aranha = aranha.posicao.y;
-
-    float x_fazendeiro = fazendeiro.posicao.x;
-    float y_fazendeiro = fazendeiro.posicao.y;
-
-     if (x_aranha == x_fazendeiro && y_aranha == y_fazendeiro) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
 void testa_colisao_aranha_base(ARANHA *aranha) {
-    if ((*aranha).posicao.y == 0) {
-        (*aranha).status = 0;
+    if (aranha->posicao.y >= (ALTURA_TELA - MARGEM_JOGO_Y - TAMANHO_ARANHA)) {
+        aranha->status = 0;
     }
 }
 
-void move_aranhas(FAZENDEIRO *fazendeiro, ARANHA aranhas[], int total_aranhas) {
-    int i;
+void move_aranhas(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], int total_aranhas) {
+    int i, colidiu_com_fazendeiro;
 
     for(i = 0; i < total_aranhas; i++) {
-        move_aranha(&(aranhas[i]));
+        move_aranha(&(aranhas[i]), cogumelos, *fazendeiro);
 
-        (*fazendeiro).doente += testa_colisao_aranha_fazendeiro(aranhas[i], *fazendeiro);
+        colidiu_com_fazendeiro = verifica_colisao(aranhas[i].posicao, TAMANHO_ARANHA, fazendeiro->posicao, TAMANHO_JOGADOR);
+        fazendeiro->doente += colidiu_com_fazendeiro;
+
+        if (colidiu_com_fazendeiro) {
+            fazendeiro->status = paralisado;
+            fazendeiro->vidas -= 1;
+
+            WaitTime(3);
+
+            // fazendeiro->status = livre;
+        }
 
         testa_colisao_aranha_base(&(aranhas[i]));
 
-        WaitTime(1000);
+        WaitTime(1);
     }
 }
 
@@ -470,15 +446,33 @@ void gera_todas_aranhas(ARANHA aranhas[], int total_aranhas) {
 void desenha_aranhas(ARANHA aranhas[], int total_aranhas) {
     int i;
 
+    Image aranha = LoadImage("imagens/aranha.png");
+    Texture2D textura_aranha = LoadTextureFromImage(aranha); 
+
+    UnloadImage(aranha);
+
     for(i = 0; i < total_aranhas; i++) {
-        DrawRectangle(aranhas[i].posicao.x, aranhas[i].posicao.y, TAMANHO_ARANHA, TAMANHO_ARANHA, BLUE);
+        if (aranhas[i].status == 1) {
+            DrawTexture(textura_aranha, aranhas[i].posicao.x, aranhas[i].posicao.y, WHITE);
+        }
     }
 }
 
 // === Fim das Funcoes para Aranhas ===
 
-int main() {
+int conta_cogumelos_restantes(COGUMELO cogumelos[], int total_cogumelos) {
+    int i, contador = 0;
 
+    for(i = 0; i < total_cogumelos; i++) {
+        if (cogumelos[i].status == 1) {
+            contador++;
+        }
+    }
+
+    return contador;
+}
+
+int main() {
     FAZENDEIRO fazendeiro = {};
     COGUMELO cogumelos[NUM_COGUMELOS] = {};
     ARANHA aranhas[NUM_ARANHAS] = {};
@@ -488,25 +482,26 @@ int main() {
 
     gera_fazendeiro(&fazendeiro);
     gera_cogumelos(cogumelos, NUM_COGUMELOS);
-    printf("%d", cogumelos[1].posicao.x);
+    gera_todas_aranhas(aranhas, NUM_ARANHAS);
 
     InitWindow(LARGURA_TELA, ALTURA_TELA, "millipede");
     SetTargetFPS(FRAMERATE);
 
+    // EnableEventWaiting();
+
     while (!WindowShouldClose()) {
         movimenta_jogador(&fazendeiro, cogumelos);
-        move_aranhas(&fazendeiro, aranhas, NUM_ARANHAS);
+        move_aranhas(&fazendeiro, aranhas, cogumelos, NUM_ARANHAS);
 
         BeginDrawing();
         ClearBackground(BLACK);
 
         desenha_moldura();
         desenha_menu_superior(itens_menu_superior);
-        desenha_menu_inferior(itens_menu_inferior, fazendeiro, NUM_COGUMELOS);
+        desenha_menu_inferior(itens_menu_inferior, &fazendeiro, conta_cogumelos_restantes(cogumelos, NUM_COGUMELOS));
 
         desenha_jogador(fazendeiro);
         desenha_cogumelos(cogumelos, NUM_COGUMELOS);
-
         desenha_aranhas(aranhas, NUM_ARANHAS);
 
         EndDrawing();
