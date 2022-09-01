@@ -33,6 +33,8 @@
 #define TAMNOME 100
 
 #define PASSO_ARANHA 1
+#define MOVIMENTO_TIRO 6
+#define TAMANHO_TIRO 5
 
 typedef enum {
     esq = 6,
@@ -75,9 +77,16 @@ typedef struct {
 typedef struct {
     COORD posicao;
     DIRECAO direcao;
+    int status;
+} TIRO;
+
+typedef struct {
+    COORD posicao;
+    DIRECAO direcao;
     char nome[TAMANHO_STR];
     int vidas;
-    int tiros; //inicializa em 200
+    TIRO tiros[NUM_TIROS];
+    int tiros_restantes;
     int cogumelos_colhidos; //inicializa em zero
     int status; // Livre, Paralisado, ou Morto. Pode definir enumeracao
     int doente; //qtos cogumelos para curar, zero se estiver sao
