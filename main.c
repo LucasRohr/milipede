@@ -595,10 +595,40 @@ int conta_cogumelos_restantes(COGUMELO cogumelos[], int total_cogumelos) {
     return contador;
 }
 
+// Funcoes para Milipede
+
+void gera_milipede(MILIPEDE *milipede) {
+    int tamanho_milipede = (int) (rand() % (TAMANHO_MAX_MILIPEDE - TAMANHO_MIN_MILIPEDE + 1));
+    float x_random = (float) (rand() / (double) RAND_MAX * (LARGURA_TELA - (2 * MARGEM_JOGO_X) - (tamanho_milipede * TAMANHO_SEGMENTO_MILIPEDE)));
+
+    milipede->tamanho = tamanho_milipede;
+    milipede->posicao_cabeca.x = x_random;
+    milipede->posicao_cabeca.y = MARGEM_JOGO_Y + (TAMANHO_SEGMENTO_MILIPEDE * tamanho_milipede);
+    milipede->status = 1;
+    milipede->dir =  (int) (rand() % (dir_mili - esq_mili + 1));
+}
+
+void desenha_milipede(MILIPEDE milipede) {
+    int i;
+    
+    DrawCircle(milipede.posicao_cabeca.x, milipede.posicao_cabeca.y, TAMANHO_SEGMENTO_MILIPEDE, ORANGE);
+
+    for (i = 0; i < milipede.tamanho; i++) {
+        if (milipede.dir == dir_mili) {
+            DrawCircle(milipede.posicao_cabeca.x - (2 * TAMANHO_SEGMENTO_MILIPEDE * (i + 1)), milipede.posicao_cabeca.y, TAMANHO_SEGMENTO_MILIPEDE, YELLOW);
+        } else {
+            DrawCircle(milipede.posicao_cabeca.x + (2 * TAMANHO_SEGMENTO_MILIPEDE * (i + 1)), milipede.posicao_cabeca.y, TAMANHO_SEGMENTO_MILIPEDE, YELLOW);
+        }
+    }
+}
+
+/// Fim das Funcoes para Milipede
+
 int main() {
     FAZENDEIRO fazendeiro = {};
     COGUMELO cogumelos[NUM_COGUMELOS] = {};
     ARANHA aranhas[NUM_ARANHAS] = {};
+    MILIPEDE milipede = {};
 
     char itens_menu_superior[NUM_ITEMS_MENU][TAMANHO_STR] = {"ESC-Sair", "C-Carregar", "P-Pausar", "R-Ranking"};
     char itens_menu_inferior[NUM_ITEMS_MENU * 2][TAMANHO_STR] = {"PTS", "", "COG", "", "VDS", "", "TRS", ""};
@@ -606,6 +636,7 @@ int main() {
     gera_fazendeiro(&fazendeiro);
     gera_cogumelos(cogumelos, NUM_COGUMELOS);
     gera_todas_aranhas(aranhas, NUM_ARANHAS);
+    gera_milipede(&milipede);
 
     InitWindow(LARGURA_TELA, ALTURA_TELA, "millipede");
     SetTargetFPS(FRAMERATE);
@@ -629,6 +660,7 @@ int main() {
         desenha_jogador(fazendeiro);
         desenha_cogumelos(cogumelos, NUM_COGUMELOS);
         desenha_aranhas(aranhas, NUM_ARANHAS);
+        desenha_milipede(milipede);
 
         EndDrawing();
     }

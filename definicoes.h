@@ -36,6 +36,10 @@
 #define MOVIMENTO_TIRO 6
 #define TAMANHO_TIRO 5
 
+#define TAMANHO_SEGMENTO_MILIPEDE 20
+#define TAMANHO_MIN_MILIPEDE 4
+#define TAMANHO_MAX_MILIPEDE 10
+
 typedef enum {
     esq = 6,
     dir = 2,
@@ -47,6 +51,11 @@ typedef enum {
     esq_baixo = 5,
     null = -1,
 } DIRECAO;
+
+typedef enum {
+    esq_mili = 0,
+    dir_mili = 1,
+} DIRECAO_MILIPEDE;
 
 typedef enum {
     morto = 0,
@@ -63,10 +72,11 @@ typedef struct {
 } COORD;
 
 typedef struct {
-    COORD posicao; // Da RayLib, posicao.x e posicao.y
-    int tamanho; // numero de segmentos
-    DIRECAO dir; //usa valores da enumera��o ESQ ou DIR ou BAIXO
-} MILIPEDE; // n�o utilizada nessa aula
+    COORD posicao_cabeca;
+    int tamanho;
+    DIRECAO_MILIPEDE dir; 
+    int status; // no cen�rio, oculta - 1, 0
+} MILIPEDE;
 
 typedef struct {
     COORD posicao; // Da RayLib, posicao.x e posicao.y
