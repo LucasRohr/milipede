@@ -1,12 +1,14 @@
 #include "raylib.h"
 
+#define ESC 27
 #define ENTER 10
+
 #define LARGURA_TELA 810
 #define ALTURA_TELA 640
 #define FRAMERATE 60
 
 #define MOVIMENTO 3
-#define ESC 27
+#define MOVIMENTO_TIRO 6
 
 #define DIMENSAO_RETANGULO_BORDA 5
 #define MARGEM_RETANGULO_BORDA 10
@@ -33,8 +35,8 @@
 #define TAMNOME 100
 
 #define PASSO_ARANHA 1
-#define MOVIMENTO_TIRO 6
-#define TAMANHO_TIRO 5
+
+#define TAMANHO_TIRO 6
 
 typedef enum {
     esq = 6,
@@ -90,9 +92,16 @@ typedef struct {
     int cogumelos_colhidos; //inicializa em zero
     int status; // Livre, Paralisado, ou Morto. Pode definir enumeracao
     int doente; //qtos cogumelos para curar, zero se estiver sao
+    int pausado;
 } FAZENDEIRO;
 
 typedef struct {
     COORD posicao;
     int status;
 } COGUMELO;
+
+typedef struct {
+    FAZENDEIRO fazendeiro;
+    ARANHA aranhas[NUM_ARANHAS];
+    COGUMELO cogumelos[NUM_COGUMELOS];
+} ESTADO_JOGO;
