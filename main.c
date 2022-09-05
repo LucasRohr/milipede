@@ -65,7 +65,7 @@ void desenha_jogador(FAZENDEIRO fazendeiro) {
         ImageColorInvert(&fazendeiro_imagem);
     }
 
-    Texture2D textura_fazendeiro = LoadTextureFromImage(fazendeiro_imagem); 
+    Texture2D textura_fazendeiro = LoadTextureFromImage(fazendeiro_imagem);
 
     DrawTexture(textura_fazendeiro, fazendeiro.posicao.x, fazendeiro.posicao.y, WHITE);
 
@@ -86,7 +86,7 @@ void desenha_cogumelos(COGUMELO cogumelos[], int num_cogumelos){
     int i;
 
     Image cogumelo_imagem = LoadImage("imagens/cogumelo.png");
-    Texture2D textura_cogumelo = LoadTextureFromImage(cogumelo_imagem); 
+    Texture2D textura_cogumelo = LoadTextureFromImage(cogumelo_imagem);
 
     UnloadImage(cogumelo_imagem);
 
@@ -95,6 +95,10 @@ void desenha_cogumelos(COGUMELO cogumelos[], int num_cogumelos){
             DrawTexture(textura_cogumelo, cogumelos[i].posicao.x, cogumelos[i].posicao.y, WHITE);
         }
     }
+}
+
+void desenha_pausa(){
+    DrawText("| |", LARGURA_TELA / 2, ALTURA_TELA / 2, TAMANHO_FONTE * 2, WHITE);
 }
 
 int gera_posicao_random(int valor_minimo, int valor_maximo) {
@@ -149,14 +153,79 @@ void gera_fazendeiro(FAZENDEIRO *fazendeiro){
     fazendeiro->cogumelos_colhidos = 0;
     fazendeiro->status = livre;
     fazendeiro->doente = 0;
+    fazendeiro->pausado = 0;
 }
 
-void pausar_jogo(){
-    printf("\nPausar");
+ESTADO_JOGO cria_save(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[]){
+    int i;
+    ESTADO_JOGO save;
+
+    save.fazendeiro = *fazendeiro;
+    for (i = 0; i < NUM_ARANHAS; i++){
+        save.aranhas[i] = aranhas[i];
+    }
+    for(i = 0; i < NUM_COGUMELOS; i++){
+        save.cogumelos[i] = cogumelos[i];
+    }
+    return (save);
 }
 
-void carregar_jogo(){
-    printf("\nCarregar");
+int salvar_jogo(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[]){
+
+    ESTADO_JOGO save = cria_save(fazendeiro, aranhas, cogumelos);
+    FILE *arq;
+
+    arq = fopen("quicksave.bin", "wb");
+
+    if (!arq){
+        printf("\n\nErro na abertura de arquivo\n\n");
+    }
+    if (fwrite(&save, sizeof(ESTADO_JOGO), 1, arq) != 1){
+        printf("\n\nErro na escrita de arquivo.\n\n");
+    }
+    fclose(arq);
+
+    return 0;
+}
+
+void pausar_jogo(FAZENDEIRO *fazendeiro,  ARANHA aranhas[], COGUMELO cogumelos[]){
+    if (fazendeiro->pausado){
+        fazendeiro->pausado = 0;
+    } else {
+        salvar_jogo(fazendeiro, aranhas, cogumelos);
+        fazendeiro->pausado = 1;
+    }
+}
+
+void instanciar_jogo(ESTADO_JOGO save, FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[]){
+    int i;
+
+    *fazendeiro = save.fazendeiro;
+    for (i = 0; i < NUM_ARANHAS; i++){
+        aranhas[i] = save.aranhas[i];
+    }
+    for(i = 0; i < NUM_COGUMELOS; i++){
+        cogumelos[i] = save.cogumelos[i];
+    }
+}
+
+int carregar_jogo(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[]){
+    ESTADO_JOGO save;
+    FILE *arq;
+
+    arq = fopen("quicksave.bin", "rb");
+    if (!arq){
+        printf("\n\nErro na abertura de arquivo\n\n");
+    }
+    if (fread(&save, sizeof(ESTADO_JOGO), 1, arq) != 1){
+        printf("\n\nErro na leitura de arquivo\n\n");
+    }
+
+    instanciar_jogo(save, fazendeiro, aranhas, cogumelos);
+
+    fclose(arq);
+
+    return 0;
 }
 
 void mostrar_ranking(){
@@ -316,8 +385,8 @@ void muda_direcao_jogador(DIRECAO *direcao){
 }
 
 
-void comandos_jogador(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[]) {
-    // Fun��o para ler inputs do jogador.
+void movimenta_jogador(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[]) {
+    // Funcao para movimentar o jogador.
     COORD nova_posicao = {};
 
     if(IsKeyDown(KEY_UP)){
@@ -350,18 +419,21 @@ void comandos_jogador(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[]) {
     }
 
     muda_direcao_jogador(&fazendeiro->direcao);
+}
 
+void comandos_jogador(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], int num_cogumelos){
+    // Funcao para ler inputs do jogador que nao sao as teclas de movimento
     switch(GetKeyPressed()) {
         case KEY_SPACE:
-            if (fazendeiro->tiros_restantes > 0){
+            if (fazendeiro->tiros_restantes > 0 && fazendeiro->status == livre && !fazendeiro->pausado){
                 atirar(fazendeiro);
             }
             break;
         case KEY_P:
-            pausar_jogo();
+            pausar_jogo(fazendeiro, aranhas, cogumelos);
             break;
         case KEY_C:
-            carregar_jogo();
+            carregar_jogo(fazendeiro, aranhas, cogumelos);
             break;
         case KEY_R:
             mostrar_ranking();
@@ -570,7 +642,7 @@ void desenha_aranhas(ARANHA aranhas[], int total_aranhas) {
     int i;
 
     Image aranha = LoadImage("imagens/aranha.png");
-    Texture2D textura_aranha = LoadTextureFromImage(aranha); 
+    Texture2D textura_aranha = LoadTextureFromImage(aranha);
 
     UnloadImage(aranha);
 
@@ -595,43 +667,58 @@ int conta_cogumelos_restantes(COGUMELO cogumelos[], int total_cogumelos) {
     return contador;
 }
 
-int main() {
-    FAZENDEIRO fazendeiro = {};
-    COGUMELO cogumelos[NUM_COGUMELOS] = {};
-    ARANHA aranhas[NUM_ARANHAS] = {};
+void game_loop(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[]){
 
     char itens_menu_superior[NUM_ITEMS_MENU][TAMANHO_STR] = {"ESC-Sair", "C-Carregar", "P-Pausar", "R-Ranking"};
     char itens_menu_inferior[NUM_ITEMS_MENU * 2][TAMANHO_STR] = {"PTS", "", "COG", "", "VDS", "", "TRS", ""};
 
-    gera_fazendeiro(&fazendeiro);
+    gera_fazendeiro(fazendeiro);
     gera_cogumelos(cogumelos, NUM_COGUMELOS);
     gera_todas_aranhas(aranhas, NUM_ARANHAS);
+
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BLACK);
+
+        desenha_moldura();
+        desenha_menu_superior(itens_menu_superior);
+        desenha_menu_inferior(itens_menu_inferior, *fazendeiro, NUM_COGUMELOS);
+
+        desenha_tiros(fazendeiro->tiros, NUM_TIROS);
+        desenha_jogador(*fazendeiro);
+        desenha_cogumelos(cogumelos, NUM_COGUMELOS);
+        desenha_aranhas(aranhas, NUM_ARANHAS);
+
+        comandos_jogador(fazendeiro, aranhas, cogumelos, NUM_COGUMELOS);
+
+        // Comandos se o fazendeiro nao esta pausado
+        if (fazendeiro->pausado){
+            desenha_pausa();
+        } else{
+            movimenta_jogador(fazendeiro, cogumelos);
+
+            move_aranhas(fazendeiro, aranhas, cogumelos, NUM_ARANHAS);
+            movimenta_tiros(fazendeiro->tiros);
+            verifica_tiros(fazendeiro, cogumelos);
+        }
+
+
+        EndDrawing();
+    }
+
+}
+
+int main() {
+    FAZENDEIRO fazendeiro = {};
+    COGUMELO cogumelos[NUM_COGUMELOS] = {};
+    ARANHA aranhas[NUM_ARANHAS] = {};
 
     InitWindow(LARGURA_TELA, ALTURA_TELA, "millipede");
     SetTargetFPS(FRAMERATE);
 
     // EnableEventWaiting();
 
-    while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(BLACK);
-
-        comandos_jogador(&fazendeiro, cogumelos);
-        move_aranhas(&fazendeiro, aranhas, cogumelos, NUM_ARANHAS);
-        movimenta_tiros(fazendeiro.tiros);
-        verifica_tiros(&fazendeiro, cogumelos);
-
-        desenha_moldura();
-        desenha_menu_superior(itens_menu_superior);
-        desenha_menu_inferior(itens_menu_inferior, fazendeiro, NUM_COGUMELOS);
-
-        desenha_tiros(fazendeiro.tiros, NUM_TIROS);
-        desenha_jogador(fazendeiro);
-        desenha_cogumelos(cogumelos, NUM_COGUMELOS);
-        desenha_aranhas(aranhas, NUM_ARANHAS);
-
-        EndDrawing();
-    }
+    game_loop(&fazendeiro, cogumelos, aranhas);
 
     CloseWindow();
 
