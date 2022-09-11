@@ -960,6 +960,7 @@ int main() {
     gera_cogumelos(cogumelos, NUM_COGUMELOS);
     gera_todas_aranhas(aranhas, NUM_ARANHAS);
     carregar_ranking(jogadores);
+    ordenar_ranking(jogadores);
 
     InitWindow(LARGURA_TELA, ALTURA_TELA, "millipede");
     SetTargetFPS(FRAMERATE);
