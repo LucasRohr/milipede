@@ -97,8 +97,82 @@ void desenha_cogumelos(COGUMELO cogumelos[], int num_cogumelos){
     }
 }
 
-void desenha_pausa(){
-    DrawText("| |", LARGURA_TELA / 2, ALTURA_TELA / 2, TAMANHO_FONTE * 2, WHITE);
+int instanciar_nome(char input[], int *num_letras){
+    int tecla = GetCharPressed();
+
+    while (tecla > 0) {
+        if ((tecla >= 32) && (tecla <= 125) && (*num_letras < TAMANHO_NOME)) {
+            input[*num_letras] = (char)tecla;
+            input[*num_letras + 1] = '\0'; // Adiciona \0 ao fim da string
+            *num_letras = *num_letras + 1;
+        }
+        tecla = GetCharPressed();  // Verifica proximo caractere
+    }
+    if (IsKeyPressed(KEY_BACKSPACE)){ // Apagar ultimo caractere se pressionar backspace
+        *num_letras = *num_letras - 1;
+
+        if (*num_letras < 0) {
+            *num_letras = 0;
+        }
+        input[*num_letras] = '\0';
+    }
+
+    if (IsKeyPressed(KEY_ENTER)){
+        return 1; // Se apertar enter, retorna 1
+    } else {
+        return 0;
+    }
+}
+
+int verifica_numero_jogadores(JOGADOR jogadores[]){
+    int i, num_jogadores_validos = 0;
+
+    // Verifica quantos jogadores lidos tem pontuação diferente de 0, ou seja, são pontuacoes válidas
+    for(i = 0; i < NUM_JOGADORES - 1; i++){
+        if(jogadores[i].pontos){
+            num_jogadores_validos++;
+        }
+    }
+
+    return num_jogadores_validos;
+}
+
+void desenha_ranking(JOGADOR jogadores[]){
+    int i, num_jogadores_validos;
+    Color cor;
+    float pos = 0.2;
+
+    char scores[NUM_JOGADORES - 1][TAMANHO_STR] = {"1º ", "2º ", "3º ", "4º ", "5º "};
+    char buffer_pontos[TAMANHO_STR] = {};
+
+    num_jogadores_validos = verifica_numero_jogadores(jogadores);
+
+    for (i = 0; i < num_jogadores_validos; i++){
+        sprintf(buffer_pontos, "%d", jogadores[i].pontos); // Converte pontos para str
+        strcat(scores[i], jogadores[i].nome); // Concatena o nome na str
+        strcat(scores[i], " : "); // Concatena o nome na str
+        strcat(scores[i], buffer_pontos); // Concatena os nomes na str
+    }
+
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, BLACK);
+    DrawText("HALL OF FAME", LARGURA_TELA / 3, MARGEM_JOGO_Y, TAMANHO_FONTE, GOLD);
+
+    for(i = 0; i < num_jogadores_validos; i++){
+        switch(i){ // Seleciona cor dos jogadores baseado em sua classificacao
+            case 0:
+                cor = GOLD;
+                break;
+            case 1:
+                cor = GRAY;
+                break;
+            default:
+                cor = BROWN;
+                break;
+        }
+        DrawText(scores[i], MARGEM_JOGO_X, ALTURA_TELA * pos, TAMANHO_FONTE, cor); // Escreve as pontuacoes
+        pos += 0.1; // Pula uma linha
+    }
+
 }
 
 int gera_posicao_random(int valor_minimo, int valor_maximo) {
@@ -147,13 +221,12 @@ void gera_fazendeiro(FAZENDEIRO *fazendeiro){
     fazendeiro->posicao.x = LARGURA_TELA / 2;
     fazendeiro->posicao.y = ALTURA_TELA - MARGEM_JOGO_Y - DIMENSAO_RETANGULO_BORDA - TAMANHO_JOGADOR;
     fazendeiro->direcao = cima;
-    strcpy(fazendeiro->nome, "Nome");
+    strcpy(fazendeiro->nome, "Jogador");
     fazendeiro->vidas = NUM_VIDAS;
     fazendeiro->tiros_restantes = NUM_TIROS;
     fazendeiro->cogumelos_colhidos = 0;
     fazendeiro->status = livre;
     fazendeiro->doente = 0;
-    fazendeiro->pausado = 0;
 }
 
 ESTADO_JOGO cria_save(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[]){
@@ -174,33 +247,50 @@ int salvar_jogo(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[]){
 
     ESTADO_JOGO save = cria_save(fazendeiro, aranhas, cogumelos);
     FILE *arq;
+    char nome_arquivo[TAMANHO_STR] = "";
 
-    arq = fopen("quicksave.bin", "wb");
+    // Gera o nome do arquivo, formato <nome_jogador>.bin
+    strcat(nome_arquivo, fazendeiro->nome);
+    strcat(nome_arquivo, ".bin");
 
-    if (!arq){
-        printf("\n\nErro na abertura de arquivo\n\n");
+    arq = fopen(nome_arquivo, "wb");
+
+    if (arq){
+        if (fwrite(&save, sizeof(ESTADO_JOGO), 1, arq) != 1){
+            return 0;
+        }
+    } else {
+        return 0;
     }
-    if (fwrite(&save, sizeof(ESTADO_JOGO), 1, arq) != 1){
-        printf("\n\nErro na escrita de arquivo.\n\n");
-    }
+
     fclose(arq);
 
-    return 0;
+    return 1;
 }
 
-void pausar_jogo(FAZENDEIRO *fazendeiro,  ARANHA aranhas[], COGUMELO cogumelos[]){
-    if (fazendeiro->pausado){
-        fazendeiro->pausado = 0;
-    } else {
-        salvar_jogo(fazendeiro, aranhas, cogumelos);
-        fazendeiro->pausado = 1;
+void menu_pausa(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], char input[], int *num_letras, STATUS_JOGO *status_jogo){
+
+    DrawText("Pausado", LARGURA_TELA / 3, ALTURA_TELA / 3, TAMANHO_FONTE * 2, WHITE);
+    DrawRectangle(0, ALTURA_TELA * 0.7, LARGURA_TELA, ALTURA_TELA * 0.7, WHITE); // Desenha margens brancas no menu de pausa
+    DrawRectangle(MARGEM_JOGO_X, ALTURA_TELA * 0.7 + MARGEM_JOGO_X, LARGURA_TELA - MARGEM_JOGO_X * 2, ALTURA_TELA * 0.3 - MARGEM_JOGO_X * 2, BLACK); // Desenha retangulo preto atrás do texto
+    DrawText("Digite o nome para salvar e voltar ao jogo", MARGEM_JOGO_X * 2, ALTURA_TELA* 0.8, TAMANHO_FONTE, WHITE);
+    DrawText(input, MARGEM_JOGO_X * 2, ALTURA_TELA * 0.9, TAMANHO_FONTE, WHITE);
+
+    if(instanciar_nome(input, num_letras)){ // Verifica se o jogador acabou de digitar o nome para salvar o jogo e instanciar o nome do fazendeiro
+        strcpy(fazendeiro->nome, input);
+        if(!salvar_jogo(fazendeiro, aranhas, cogumelos)){
+            printf("\n\nErro ao salvar jogo.\n\n");
+        }
+        *status_jogo = normal;
     }
+
 }
 
 void instanciar_jogo(ESTADO_JOGO save, FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[]){
     int i;
 
     *fazendeiro = save.fazendeiro;
+
     for (i = 0; i < NUM_ARANHAS; i++){
         aranhas[i] = save.aranhas[i];
     }
@@ -209,28 +299,159 @@ void instanciar_jogo(ESTADO_JOGO save, FAZENDEIRO *fazendeiro, ARANHA aranhas[],
     }
 }
 
-int carregar_jogo(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[]){
+int carregar_jogo(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], char input[]){
     ESTADO_JOGO save;
     FILE *arq;
 
-    arq = fopen("quicksave.bin", "rb");
-    if (!arq){
+    char nome_arquivo[TAMANHO_STR] = "";
+
+    // Gera o nome do arquivo, formato <nome_jogador>.bin
+    strcat(nome_arquivo, input);
+    strcat(nome_arquivo, ".bin");
+
+    arq = fopen(nome_arquivo, "rb");
+    if (arq){ // Se o arquivo existe, instancia o jogo.
+        if (fread(&save, sizeof(ESTADO_JOGO), 1, arq) != 1){
+            printf("\n\nErro na leitura de arquivo\n\n");
+        }
+        instanciar_jogo(save, fazendeiro, aranhas, cogumelos);
+    } else {
         printf("\n\nErro na abertura de arquivo\n\n");
     }
-    if (fread(&save, sizeof(ESTADO_JOGO), 1, arq) != 1){
-        printf("\n\nErro na leitura de arquivo\n\n");
-    }
-
-    instanciar_jogo(save, fazendeiro, aranhas, cogumelos);
 
     fclose(arq);
 
     return 0;
 }
 
-void mostrar_ranking(){
-    printf("\nRanking");
+void menu_carregar(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], char input[], int *num_letras, STATUS_JOGO *status_jogo){
+    DrawText("Pausado", LARGURA_TELA / 3, ALTURA_TELA / 3, TAMANHO_FONTE * 2, WHITE);
+    DrawRectangle(0, ALTURA_TELA * 0.7, LARGURA_TELA, ALTURA_TELA * 0.7, WHITE); // Desenha margens brancas no menu de pausa
+    DrawRectangle(MARGEM_JOGO_X, ALTURA_TELA * 0.7 + MARGEM_JOGO_X, LARGURA_TELA - MARGEM_JOGO_X * 2, ALTURA_TELA * 0.3 - MARGEM_JOGO_X * 2, BLACK); // Desenha retangulo preto atrás do texto
+    DrawText("Digite o nome do jogo para carregar.", MARGEM_JOGO_X * 2, ALTURA_TELA* 0.8, TAMANHO_FONTE, WHITE);
+    DrawText(input, MARGEM_JOGO_X * 2, ALTURA_TELA * 0.9, TAMANHO_FONTE, WHITE);
 
+    if(instanciar_nome(input, num_letras)){ // Verifica se o jogador acabou de digitar o nome para carregar o jogo
+        carregar_jogo(fazendeiro, aranhas, cogumelos, input);
+        *status_jogo = normal;
+    }
+}
+
+void inserir_jogador_atual(FAZENDEIRO fazendeiro, JOGADOR jogadores[]){
+    int i = 0, encontrado = 0;
+    JOGADOR jogador_atual;
+
+    strcpy(jogador_atual.nome, fazendeiro.nome);
+    jogador_atual.pontos = fazendeiro.cogumelos_colhidos;
+
+    while(jogadores[i].pontos != 0){
+        if (!strcmp(jogadores[i].nome, fazendeiro.nome)){ // Se o jogador atual já está na lista de jogadores, flag encontrado para 1
+            if (fazendeiro.cogumelos_colhidos > jogadores[i].pontos){ // Se a pontuacao atual é maior que a que já esta no ranking, atualiza ela.
+                jogadores[i].pontos = fazendeiro.cogumelos_colhidos;
+            }
+            encontrado = 1;
+        }
+        i++;
+    }
+
+    if(!encontrado){ // Se o jogador não está na lista de jogadores, insere ele na ultima posicao
+        jogadores[NUM_JOGADORES - 1] = jogador_atual;
+    }
+}
+
+void ordenar_ranking(JOGADOR jogadores[]){
+    JOGADOR buffer;
+    int i, j;
+
+    // Bubble sort para o ranking de jogadores
+    for(i = 0; i < NUM_JOGADORES; i++){
+        for (j = 0; j < NUM_JOGADORES - i - 1; j++){
+
+            if (jogadores[j].pontos < jogadores[j+1].pontos) {
+                buffer = jogadores[j];
+                jogadores[j] = jogadores[j + 1];
+                jogadores[j + 1] = buffer;
+            }
+        }
+    }
+}
+
+void mostrar_ranking(FAZENDEIRO *fazendeiro, JOGADOR jogadores[], STATUS_JOGO *status_jogo){
+    // Se ja esta mostrando o ranking, volta ao jogo. Senao, insere o jogador atual, ordena e mostra o ranking.
+    if(*status_jogo == mostrando_ranking){
+        *status_jogo = normal;
+    } else {
+        *status_jogo = mostrando_ranking;
+    }
+
+}
+
+int carregar_ranking(JOGADOR jogadores[]){
+    FILE *arq;
+    int i = 0 , erro = 0;
+    char buffer_str[TAMANHO_STR];
+
+    arq = fopen("ranking.txt" , "r");
+
+    if(!arq){
+        printf("\n\nErro na abertura de arquivo.\n\n");
+        erro+= 1;
+    } else {
+        while(i < NUM_JOGADORES - 1 && !feof(arq)){
+            if(fgets(buffer_str, TAMANHO_STR, arq) == NULL){
+                printf("\n\nErro na leitura de arquivo.\n\n");
+                erro += 1;
+            } else {
+                buffer_str[TAMANHO_STR - 1] = '\0'; // Insere \0 no final da string
+                strcpy(jogadores[i].nome, strtok(buffer_str, ";")); // Le o nome do jogador (até encontrar um ;)
+                jogadores[i].pontos = atoi(strtok(NULL, ";")); // Le a pontuacao do jogador e converte para int.
+                i++;
+            }
+        }
+    }
+
+    fclose(arq);
+    return erro;
+}
+
+int salvar_ranking(JOGADOR jogadores[]){
+    FILE *arq;
+    int i = 0, erro = 0;
+
+
+    arq = fopen("ranking.txt", "w");
+
+    if (arq == NULL){
+        erro += 1;
+    } else{
+        while (i < verifica_numero_jogadores(jogadores)){
+            if(fprintf(arq, "%s;%d\n", jogadores[i].nome, jogadores[i].pontos) < 0){ // Printa jogador no arquivo, formato <nome_jogador>;<pontuacao>
+                erro += 1;
+            }
+            i++;
+        }
+    }
+
+    fclose(arq);
+    return erro;
+}
+
+void menu_sair(FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char input[], int *num_letras, STATUS_JOGO *status_jogo, int *sair) {
+    DrawText("Saindo", LARGURA_TELA / 3, ALTURA_TELA / 3, TAMANHO_FONTE * 2, WHITE);
+    DrawRectangle(0, ALTURA_TELA * 0.7, LARGURA_TELA, ALTURA_TELA * 0.7, WHITE); // Desenha margens brancas no menu de pausa
+    DrawRectangle(MARGEM_JOGO_X, ALTURA_TELA * 0.7 + MARGEM_JOGO_X, LARGURA_TELA - MARGEM_JOGO_X * 2, ALTURA_TELA * 0.3 - MARGEM_JOGO_X * 2, BLACK); // Desenha retangulo preto atrás do texto
+    DrawText("Digite o nome antes de sair (cancelar com ESC)", MARGEM_JOGO_X * 2, ALTURA_TELA* 0.8, TAMANHO_FONTE, WHITE);
+    DrawText(input, MARGEM_JOGO_X * 2, ALTURA_TELA * 0.9, TAMANHO_FONTE, WHITE);
+
+    if(instanciar_nome(input, num_letras)){ // Verifica se o jogador acabou de digitar o nome, para sair o jogo e atualizar o ranking
+        strcpy(fazendeiro->nome, input);
+        inserir_jogador_atual(*fazendeiro, jogadores);
+        ordenar_ranking(jogadores);
+        if (salvar_ranking(jogadores)){
+            printf("\n\nErro ao salvar ranking.\n\n");
+        }
+        *sair = 1;
+    }
 }
 
 void atirar(FAZENDEIRO *fazendeiro){
@@ -384,7 +605,6 @@ void muda_direcao_jogador(DIRECAO *direcao){
     }
 }
 
-
 void movimenta_jogador(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[]) {
     // Funcao para movimentar o jogador.
     COORD nova_posicao = {};
@@ -421,26 +641,45 @@ void movimenta_jogador(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[]) {
     muda_direcao_jogador(&fazendeiro->direcao);
 }
 
-void comandos_jogador(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], int num_cogumelos){
+void comandos_jogador(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], int num_cogumelos, JOGADOR jogadores[], STATUS_JOGO *status_jogo){
     // Funcao para ler inputs do jogador que nao sao as teclas de movimento
+
     switch(GetKeyPressed()) {
+
         case KEY_SPACE:
-            if (fazendeiro->tiros_restantes > 0 && fazendeiro->status == livre && !fazendeiro->pausado){
+            if (fazendeiro->tiros_restantes > 0 && fazendeiro->status == livre && *status_jogo == normal){
                 atirar(fazendeiro);
             }
             break;
+
         case KEY_P:
-            pausar_jogo(fazendeiro, aranhas, cogumelos);
+            if (*status_jogo == normal){
+                *status_jogo = pausado;
+            }
             break;
+
         case KEY_C:
-            carregar_jogo(fazendeiro, aranhas, cogumelos);
+            if (*status_jogo == normal){
+                *status_jogo = carregando;
+            }
             break;
+
         case KEY_R:
-            mostrar_ranking();
+            if (*status_jogo == normal){
+                *status_jogo = mostrando_ranking;
+            } else if (*status_jogo == mostrando_ranking){
+                *status_jogo = normal;
+            }
             break;
-        case ESC:
-            CloseWindow();
+
+        case KEY_ESCAPE:
+            if (*status_jogo == normal){
+                *status_jogo = saindo;
+            } else if (*status_jogo == saindo){
+                *status_jogo = normal;
+            }
             break;
+
         default:
             break;
     }
@@ -667,16 +906,17 @@ int conta_cogumelos_restantes(COGUMELO cogumelos[], int total_cogumelos) {
     return contador;
 }
 
-void game_loop(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[]){
+void game_loop(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[], JOGADOR jogadores[]){
 
+    STATUS_JOGO status_jogo = normal;
+    int sair = 0;
+
+    char input[TAMANHO_NOME + 1] = "\0";
+    int num_letras = 0;
     char itens_menu_superior[NUM_ITEMS_MENU][TAMANHO_STR] = {"ESC-Sair", "C-Carregar", "P-Pausar", "R-Ranking"};
     char itens_menu_inferior[NUM_ITEMS_MENU * 2][TAMANHO_STR] = {"PTS", "", "COG", "", "VDS", "", "TRS", ""};
 
-    gera_fazendeiro(fazendeiro);
-    gera_cogumelos(cogumelos, NUM_COGUMELOS);
-    gera_todas_aranhas(aranhas, NUM_ARANHAS);
-
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose() && !sair) {
         BeginDrawing();
         ClearBackground(BLACK);
 
@@ -689,19 +929,23 @@ void game_loop(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[]){
         desenha_cogumelos(cogumelos, NUM_COGUMELOS);
         desenha_aranhas(aranhas, NUM_ARANHAS);
 
-        comandos_jogador(fazendeiro, aranhas, cogumelos, NUM_COGUMELOS);
+        comandos_jogador(fazendeiro, aranhas, cogumelos, NUM_COGUMELOS, jogadores, &status_jogo);
 
-        // Comandos se o fazendeiro nao esta pausado
-        if (fazendeiro->pausado){
-            desenha_pausa();
+        if (status_jogo == pausado){ // Comandos se o jogo esta pausado
+            menu_pausa(fazendeiro, aranhas, cogumelos, input, &num_letras, &status_jogo);
+        } else if(status_jogo == carregando){ // Comandos se o jogo esta carregando
+            menu_carregar(fazendeiro, aranhas, cogumelos, input, &num_letras, &status_jogo);
+        } else if(status_jogo == mostrando_ranking){ // Comandos se o ranking está sendo mostrado
+            desenha_ranking(jogadores);
+        } else if(status_jogo == saindo){ // Comandos se o jogador quer sair
+            menu_sair(fazendeiro, jogadores, input, &num_letras, &status_jogo, &sair);
         } else{
+            // Comandos se nao
             movimenta_jogador(fazendeiro, cogumelos);
-
             move_aranhas(fazendeiro, aranhas, cogumelos, NUM_ARANHAS);
             movimenta_tiros(fazendeiro->tiros);
             verifica_tiros(fazendeiro, cogumelos);
         }
-
 
         EndDrawing();
     }
@@ -712,13 +956,19 @@ int main() {
     FAZENDEIRO fazendeiro = {};
     COGUMELO cogumelos[NUM_COGUMELOS] = {};
     ARANHA aranhas[NUM_ARANHAS] = {};
+    JOGADOR jogadores[NUM_JOGADORES] = {};
+
+    gera_fazendeiro(&fazendeiro);
+    gera_cogumelos(cogumelos, NUM_COGUMELOS);
+    gera_todas_aranhas(aranhas, NUM_ARANHAS);
+    carregar_ranking(jogadores);
 
     InitWindow(LARGURA_TELA, ALTURA_TELA, "millipede");
     SetTargetFPS(FRAMERATE);
-
+    SetExitKey(KEY_F1); // Para liberar o ESC, default da raylib
     // EnableEventWaiting();
 
-    game_loop(&fazendeiro, cogumelos, aranhas);
+    game_loop(&fazendeiro, cogumelos, aranhas, jogadores);
 
     CloseWindow();
 
