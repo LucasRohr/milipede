@@ -388,18 +388,16 @@ void mostrar_ranking(FAZENDEIRO *fazendeiro, JOGADOR jogadores[], STATUS_JOGO *s
 
 int carregar_ranking(JOGADOR jogadores[]){
     FILE *arq;
-    int i = 0 , erro = 0;
+    int i = 0, erro = 0;
     char buffer_str[TAMANHO_STR];
 
     arq = fopen("ranking.txt" , "r");
 
     if(!arq){
-        printf("\n\nErro na abertura de arquivo.\n\n");
         erro+= 1;
     } else {
         while(i < NUM_JOGADORES - 1 && !feof(arq)){
             if(fgets(buffer_str, TAMANHO_STR, arq) == NULL){
-                printf("\n\nErro na leitura de arquivo.\n\n");
                 erro += 1;
             } else {
                 buffer_str[TAMANHO_STR - 1] = '\0'; // Insere \0 no final da string
