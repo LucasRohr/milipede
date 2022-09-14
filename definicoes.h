@@ -17,7 +17,8 @@
 #define MARGEM_JOGO_X 10
 
 #define TAMANHO_FONTE 30
-#define TAMANHO_STR 30
+#define TAMANHO_NOME 20
+#define TAMANHO_STR 40
 
 #define TAMANHO_JOGADOR 38
 #define TAMANHO_COGUMELO 25
@@ -25,6 +26,7 @@
 
 #define MARGEM_COGUMELO 5
 
+#define NUM_JOGADORES 6
 #define NUM_ITEMS_MENU 4
 
 #define NUM_COGUMELOS 60
@@ -56,6 +58,14 @@ typedef enum {
     paralisado = 2,
 } STATUS_FAZENDEIRO;
 
+typedef enum {
+    normal = 0,
+    pausado = 1,
+    carregando = 2,
+    mostrando_ranking = 3,
+    saindo = 4,
+} STATUS_JOGO;
+
 // Estruturas
 
 
@@ -85,14 +95,13 @@ typedef struct {
 typedef struct {
     COORD posicao;
     DIRECAO direcao;
-    char nome[TAMANHO_STR];
+    char nome[TAMANHO_NOME];
     int vidas;
     TIRO tiros[NUM_TIROS];
     int tiros_restantes;
     int cogumelos_colhidos; //inicializa em zero
     int status; // Livre, Paralisado, ou Morto. Pode definir enumeracao
     int doente; //qtos cogumelos para curar, zero se estiver sao
-    int pausado;
 } FAZENDEIRO;
 
 typedef struct {
@@ -105,3 +114,8 @@ typedef struct {
     ARANHA aranhas[NUM_ARANHAS];
     COGUMELO cogumelos[NUM_COGUMELOS];
 } ESTADO_JOGO;
+
+typedef struct {
+    char nome[TAMANHO_STR];
+    int pontos;
+} JOGADOR;
