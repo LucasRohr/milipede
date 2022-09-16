@@ -40,6 +40,9 @@
 
 #define TAMANHO_TIRO 6
 
+#define ESPACO 35
+#define CURLY_BRACKET 125
+
 typedef enum {
     esq = 6,
     dir = 2,
@@ -67,7 +70,6 @@ typedef enum {
 } STATUS_JOGO;
 
 // Estruturas
-
 
 typedef struct {
     int x;
