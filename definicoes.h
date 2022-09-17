@@ -1,12 +1,14 @@
 #include "raylib.h"
 
+#define ESC 27
 #define ENTER 10
+
 #define LARGURA_TELA 810
 #define ALTURA_TELA 640
 #define FRAMERATE 60
 
 #define MOVIMENTO 3
-#define ESC 27
+#define MOVIMENTO_TIRO 6
 
 #define DIMENSAO_RETANGULO_BORDA 5
 #define MARGEM_RETANGULO_BORDA 10
@@ -15,7 +17,8 @@
 #define MARGEM_JOGO_X 10
 
 #define TAMANHO_FONTE 30
-#define TAMANHO_STR 30
+#define TAMANHO_NOME 20
+#define TAMANHO_STR 40
 
 #define TAMANHO_JOGADOR 38
 #define TAMANHO_COGUMELO 25
@@ -23,6 +26,7 @@
 
 #define MARGEM_COGUMELO 5
 
+#define NUM_JOGADORES 6
 #define NUM_ITEMS_MENU 4
 
 #define NUM_COGUMELOS 60
@@ -33,8 +37,11 @@
 #define TAMNOME 100
 
 #define PASSO_ARANHA 1
-#define MOVIMENTO_TIRO 6
-#define TAMANHO_TIRO 5
+
+#define TAMANHO_TIRO 6
+
+#define ESPACO 35
+#define CURLY_BRACKET 125
 
 #define TAMANHO_SEGMENTO_MILIPEDE 40
 #define TAMANHO_MIN_MILIPEDE 4
@@ -65,8 +72,15 @@ typedef enum {
     paralisado = 2,
 } STATUS_FAZENDEIRO;
 
-// Estruturas
+typedef enum {
+    normal = 0,
+    pausado = 1,
+    carregando = 2,
+    mostrando_ranking = 3,
+    saindo = 4,
+} STATUS_JOGO;
 
+// Estruturas
 
 typedef struct {
     int x;
@@ -95,7 +109,7 @@ typedef struct {
 typedef struct {
     COORD posicao;
     DIRECAO direcao;
-    char nome[TAMANHO_STR];
+    char nome[TAMANHO_NOME];
     int vidas;
     TIRO tiros[NUM_TIROS];
     int tiros_restantes;
@@ -108,3 +122,14 @@ typedef struct {
     COORD posicao;
     int status;
 } COGUMELO;
+
+typedef struct {
+    FAZENDEIRO fazendeiro;
+    ARANHA aranhas[NUM_ARANHAS];
+    COGUMELO cogumelos[NUM_COGUMELOS];
+} ESTADO_JOGO;
+
+typedef struct {
+    char nome[TAMANHO_STR];
+    int pontos;
+} JOGADOR;
