@@ -12,10 +12,10 @@
 #include "cogumelos.h"
 #include "fazendeiro.h"
 #include "aranhas.h"
+#include "milipede.h"
 #include "saves.h"
 
-void game_loop(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[], JOGADOR jogadores[]){
-
+void game_loop(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[], JOGADOR jogadores[], MILIPEDE *milipede){
     STATUS_JOGO status_jogo = normal;
     int sair = 0;
 
@@ -36,6 +36,7 @@ void game_loop(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[], J
         desenha_jogador(*fazendeiro);
         desenha_cogumelos(cogumelos, NUM_COGUMELOS);
         desenha_aranhas(aranhas, NUM_ARANHAS);
+        desenha_milipede(*milipede);
 
         comandos_jogador(fazendeiro, aranhas, cogumelos, NUM_COGUMELOS, jogadores, &status_jogo);
 
@@ -53,6 +54,8 @@ void game_loop(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[], J
             move_aranhas(fazendeiro, aranhas, cogumelos, NUM_ARANHAS);
             movimenta_tiros(fazendeiro->tiros);
             verifica_tiros(fazendeiro, cogumelos);
+            verifica_tiros_milipede(fazendeiro, milipede);
+            movimenta_milipede(milipede, cogumelos, NUM_COGUMELOS, fazendeiro);
         }
 
         EndDrawing();
@@ -65,10 +68,12 @@ int main() {
     COGUMELO cogumelos[NUM_COGUMELOS] = {};
     ARANHA aranhas[NUM_ARANHAS] = {};
     JOGADOR jogadores[NUM_JOGADORES] = {};
+    MILIPEDE milipede = {};
 
     gera_fazendeiro(&fazendeiro);
     gera_cogumelos(cogumelos, NUM_COGUMELOS);
     gera_todas_aranhas(aranhas, NUM_ARANHAS);
+    gera_milipede(&milipede);
     carregar_ranking(jogadores);
     ordenar_ranking(jogadores);
 
@@ -77,7 +82,7 @@ int main() {
     SetExitKey(KEY_F1); // Para liberar o ESC, default da raylib
     // EnableEventWaiting();
 
-    game_loop(&fazendeiro, cogumelos, aranhas, jogadores);
+    game_loop(&fazendeiro, cogumelos, aranhas, jogadores, &milipede);
 
     CloseWindow();
 

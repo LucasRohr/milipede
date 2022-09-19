@@ -7,3 +7,4 @@ void desenha_cogumelos(COGUMELO cogumelos[], int num_cogumelos);
 void desenha_ranking(JOGADOR jogadores[]);
 void desenha_menu_pausa(char texto[], char input[]);
 void desenha_aranhas(ARANHA aranhas[], int total_aranhas);
+void desenha_milipede(MILIPEDE milipede);
