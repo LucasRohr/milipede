@@ -157,3 +157,26 @@ void desenha_aranhas(ARANHA aranhas[], int total_aranhas) {
         }
     }
 }
+
+void desenha_milipede(MILIPEDE milipede) {
+    int i;
+    
+    Image cabeca_imagem = LoadImage("imagens/milipede-cabeca.png");
+    Texture2D textura_cabeca = LoadTextureFromImage(cabeca_imagem);
+
+    Image corpo_imagem = LoadImage("imagens/milipede-corpo.png");
+    Texture2D textura_corpo = LoadTextureFromImage(corpo_imagem); 
+
+    DrawTexture(textura_cabeca, milipede.posicao_cabeca.x, milipede.posicao_cabeca.y, WHITE);
+
+    for (i = 0; i < milipede.tamanho; i++) {
+        if (milipede.dir == dir_mili) {
+            DrawTexture(textura_corpo, milipede.posicao_cabeca.x - (TAMANHO_SEGMENTO_MILIPEDE * (i + 1)), milipede.posicao_cabeca.y, WHITE);
+        } else {
+            DrawTexture(textura_corpo, milipede.posicao_cabeca.x + (TAMANHO_SEGMENTO_MILIPEDE * (i + 1)), milipede.posicao_cabeca.y, WHITE);
+        }
+    }
+
+    UnloadImage(cabeca_imagem);
+    UnloadImage(corpo_imagem);
+}
