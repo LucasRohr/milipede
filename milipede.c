@@ -1,5 +1,6 @@
 #include "definicoes.h"
 #include "colisao.h"
+#include "fazendeiro.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -18,7 +19,7 @@ void gera_milipede(MILIPEDE *milipede) {
 }
 
 void inverte_movimento_milipede(MILIPEDE *milipede) {
-    DIRECAO direcao_milipede = milipede->dir;
+    DIRECAO_MILIPEDE direcao_milipede = milipede->dir;
 
     if (direcao_milipede == esq_mili) {
         milipede->dir = dir_mili;
@@ -49,8 +50,8 @@ void verifica_colisao_milipede_cogumelos(MILIPEDE *milipede, COGUMELO cogumelos[
 }
 
 int verifica_movimento_milipede(int segmentos_milipede, COORD posicao, COGUMELO cogumelos[], FAZENDEIRO fazendeiro) {
-    // Verifica se Ã© possÃ­vel a milipede fazer algum movimento. Recebe a nova posicao, nao a atual.
-    // Retorna 1 se colide com um obstaculo, 0 se nÃ£o
+    // Verifica se é possível a milipede fazer algum movimento. Recebe a nova posicao, nao a atual.
+    // Retorna 1 se colide com um obstaculo, 0 se não
     int flag = 0;
     // int tamanho_milipede = TAMANHO_SEGMENTO_MILIPEDE * segmentos_milipede;
 
@@ -74,11 +75,26 @@ void testa_colisao_milipede_base(MILIPEDE *milipede) {
     }
 }
 
-void movimenta_milipede(MILIPEDE *milipede, COGUMELO cogumelos[], int num_cogumelos, FAZENDEIRO *fazendeiro) {
-    int colidiu_com_fazendeiro;
+void movimenta_milipede(MILIPEDE *milipede, COGUMELO cogumelos[], int num_cogumelos, FAZENDEIRO *fazendeiro, STATUS_JOGO *status_jogo) {
+    int colidiu_com_fazendeiro = 0;
     DIRECAO direcao_milipede = milipede->dir;
 
     verifica_colisao_milipede_cogumelos(milipede, cogumelos, num_cogumelos);
+    colidiu_com_fazendeiro += verifica_colisao(milipede->posicao_cabeca, TAMANHO_SEGMENTO_MILIPEDE, fazendeiro->posicao, TAMANHO_JOGADOR);
+
+    if (colidiu_com_fazendeiro && fazendeiro->contador_invulneravel == 0) { // Se a milipede colidir com o fazendeiro, e ele estiver vulneravel
+        if (fazendeiro->doente){ // Se ja estiver doente, morre
+            fazendeiro_morre(fazendeiro, status_jogo);
+        } else { // Se nao, paralisa o fazendeiro, deixa ele invulneravel por algum tempo e doente, necessitando
+            fazendeiro->doente = milipede->tamanho + 1;
+            fazendeiro->contador_paralisado = TEMPO_PARALISIA * FRAMERATE;
+            fazendeiro->contador_invulneravel = TEMPO_INVULNERAVEL * FRAMERATE;
+            fazendeiro->contador_doente = TEMPO_DOENTE * FRAMERATE;
+            fazendeiro->status = paralisado;
+        }
+        milipede->status = 0;
+        gera_milipede(milipede);
+    }
 
     switch(direcao_milipede) {
         case esq_mili:
@@ -99,20 +115,6 @@ void movimenta_milipede(MILIPEDE *milipede, COGUMELO cogumelos[], int num_cogume
             break;
         default:
             break;
-    }
-
-    colidiu_com_fazendeiro = verifica_colisao(milipede->posicao_cabeca, TAMANHO_SEGMENTO_MILIPEDE, fazendeiro->posicao, TAMANHO_JOGADOR);
-    fazendeiro->doente += colidiu_com_fazendeiro;
-
-    if (colidiu_com_fazendeiro) {
-        fazendeiro->status = paralisado;
-
-        WaitTime(3);
-
-        // fazendeiro->status = livre;
-
-        milipede->status = 0;
-        gera_milipede(milipede);
     }
 
     testa_colisao_milipede_base(milipede);

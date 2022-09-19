@@ -19,6 +19,7 @@
 #define TAMANHO_FONTE 30
 #define TAMANHO_NOME 20
 #define TAMANHO_STR 40
+#define TAMANHO_DIGITOS 5
 
 #define TAMANHO_JOGADOR 38
 #define TAMANHO_COGUMELO 25
@@ -40,14 +41,27 @@
 
 #define TAMANHO_TIRO 6
 
-#define ESPACO 35
-#define CURLY_BRACKET 125
-
 #define TAMANHO_SEGMENTO_MILIPEDE 40
 #define TAMANHO_MIN_MILIPEDE 4
 #define TAMANHO_MAX_MILIPEDE 10
 #define PASSO_MILIPEDE 1
 #define PASSO_VERTICAL_MILIPEDE 20
+
+#define ESPACO 35
+#define CURLY_BRACKET 125
+
+#define NUM_COGUMELOS_CURAR_ARANHA 5
+#define TEMPO_COOLDOWN_TIRO 0.2 // Em segundos
+#define TEMPO_PARALISIA 0.5
+#define TEMPO_INVULNERAVEL 1
+#define TEMPO_DOENTE 5
+
+#define NUM_IMAGENS 5
+#define I_TEXTURA_FAZENDEIRO 0
+#define I_TEXTURA_COGUMELO 1
+#define I_TEXTURA_ARANHA 2
+#define I_TEXTURA_MILIPEDE_CABECA 3
+#define I_TEXTURA_MILIPEDE_CORPO 4
 
 typedef enum {
     esq = 6,
@@ -78,6 +92,7 @@ typedef enum {
     carregando = 2,
     mostrando_ranking = 3,
     saindo = 4,
+    game_over = 5,
 } STATUS_JOGO;
 
 // Estruturas
@@ -90,9 +105,9 @@ typedef struct {
 typedef struct {
     COORD posicao_cabeca;
     int tamanho;
-    DIRECAO_MILIPEDE dir; 
-    int status; // no cen�rio, oculta - 1, 0
-} MILIPEDE;
+    DIRECAO_MILIPEDE dir;
+    int status; // no cenario, oculta - 1, 0
+} MILIPEDE; // n�o utilizada nessa aula
 
 typedef struct {
     COORD posicao; // Da RayLib, posicao.x e posicao.y
@@ -113,9 +128,13 @@ typedef struct {
     int vidas;
     TIRO tiros[NUM_TIROS];
     int tiros_restantes;
+    int cooldown_tiro;
     int cogumelos_colhidos; //inicializa em zero
-    int status; // Livre, Paralisado, ou Morto. Pode definir enumeracao
+    int status; // Livre, Paralisado, ou Morto.
     int doente; //qtos cogumelos para curar, zero se estiver sao
+    int contador_paralisado;
+    int contador_invulneravel;
+    int contador_doente;
 } FAZENDEIRO;
 
 typedef struct {
