@@ -5,7 +5,7 @@
 #include "colisao.h"
 
 int gera_posicao_cogumelos(int valor_minimo, int valor_maximo) {
-    // Gera valores aleat�rios, divisiveis pelo tamanho dos cogumelos + sua margem (para eles ficarem em seus pr�prios tiles)
+    // Gera valores aleatorios, divisiveis pelo tamanho dos cogumelos + sua margem (para eles ficarem em seus proprios tiles)
     return (int) (rand() % (valor_maximo - valor_minimo + 1) + valor_minimo) / (TAMANHO_COGUMELO + MARGEM_COGUMELO) * (TAMANHO_COGUMELO + MARGEM_COGUMELO);
 }
 

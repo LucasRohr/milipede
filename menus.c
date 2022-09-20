@@ -24,7 +24,7 @@ void menu_pausa(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], 
 
 void menu_sair(FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char input[], int *num_letras, STATUS_JOGO *status_jogo, int *sair) {
 
-    desenha_menu_pausa("Digite o nome antes de sair (cancelar com ESC)", input);
+    desenha_menu_pausa("Digite o seu nome antes de sair (cancelar com ESC)", input);
 
     if(instanciar_nome(input, num_letras)){ // Verifica se o jogador acabou de digitar o nome, para sair o jogo e atualizar o ranking
         strcpy(fazendeiro->nome, input);
@@ -39,11 +39,26 @@ void menu_sair(FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char input[], int *n
 
 void menu_carregar(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], char input[], int *num_letras, STATUS_JOGO *status_jogo){
 
-    desenha_menu_pausa("Digite o nome do jogo para carregar.", input);
+    desenha_menu_pausa("Digite o seu nome para carregar.", input);
 
     if(instanciar_nome(input, num_letras)){ // Verifica se o jogador acabou de digitar o nome para carregar o jogo
         carregar_jogo(fazendeiro, aranhas, cogumelos, input);
         *status_jogo = normal;
+    }
+}
+
+void menu_game_over(FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char input[], int *num_letras, STATUS_JOGO *status_jogo, int *sair){
+
+    desenha_menu_pausa("GAME OVER! Digite seu nome para salvar ranking.", input);
+
+    if(instanciar_nome(input, num_letras)){ // Verifica se o jogador acabou de digitar o nome, para sair o jogo e atualizar o ranking
+        strcpy(fazendeiro->nome, input);
+        inserir_jogador_atual(*fazendeiro, jogadores);
+        ordenar_ranking(jogadores);
+        if (salvar_ranking(jogadores)){
+            printf("\n\nErro ao salvar ranking.\n\n");
+        }
+        *sair = 1;
     }
 }
 

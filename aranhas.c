@@ -1,5 +1,6 @@
 #include "definicoes.h"
 #include "colisao.h"
+#include "fazendeiro.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -81,75 +82,92 @@ int verifica_movimento_aranha(COORD posicao, COGUMELO cogumelos[], FAZENDEIRO fa
 
 void move_aranha(ARANHA *aranha, COGUMELO cogumelos[], FAZENDEIRO fazendeiro) {
     DIRECAO direcao_aranha = aranha->dir;
+    COORD nova_posicao = {};
 
     verifica_colisao_aranha_cogumelos(*aranha, cogumelos, NUM_COGUMELOS);
 
     switch(direcao_aranha) {
         case cima:
-            aranha->posicao.y += PASSO_ARANHA;
+            nova_posicao.y = aranha->posicao.y += PASSO_ARANHA;
 
-            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
+            if(verifica_movimento_aranha(nova_posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
+            } else {
+                aranha->posicao = nova_posicao;
             }
 
             break;
         case dir_cima:
-            aranha->posicao.x += PASSO_ARANHA;
-            aranha->posicao.y += PASSO_ARANHA;
+            nova_posicao.x = aranha->posicao.x += PASSO_ARANHA;
+            nova_posicao.y = aranha->posicao.y -= PASSO_ARANHA;
 
-            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
+            if(verifica_movimento_aranha(nova_posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
+            } else {
+                aranha->posicao = nova_posicao;
             }
 
             break;
         case dir:
-            aranha->posicao.x += PASSO_ARANHA;
+            nova_posicao.x = aranha->posicao.x += PASSO_ARANHA;
 
-            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
+            if(verifica_movimento_aranha(nova_posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
+            } else {
+                aranha->posicao = nova_posicao;
             }
 
             break;
         case dir_baixo:
-            aranha->posicao.x += PASSO_ARANHA;
-            aranha->posicao.y -= PASSO_ARANHA;
+            nova_posicao.x = aranha->posicao.x += PASSO_ARANHA;
+            nova_posicao.y = aranha->posicao.y += PASSO_ARANHA;
 
-            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
+            if(verifica_movimento_aranha(nova_posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
+            } else {
+                aranha->posicao = nova_posicao;
             }
 
             break;
         case baixo:
-            aranha->posicao.y -= PASSO_ARANHA;
+            nova_posicao.y = aranha->posicao.y += PASSO_ARANHA;
 
-            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
+            if(verifica_movimento_aranha(nova_posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
+            } else {
+                aranha->posicao = nova_posicao;
             }
 
             break;
         case esq_baixo:
-            aranha->posicao.x -= PASSO_ARANHA;
-            aranha->posicao.y -= PASSO_ARANHA;
+            nova_posicao.x = aranha->posicao.x -= PASSO_ARANHA;
+            nova_posicao.y = aranha->posicao.y += PASSO_ARANHA;
 
-            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
+            if(verifica_movimento_aranha(nova_posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
+            } else {
+                aranha->posicao = nova_posicao;
             }
 
             break;
         case esq:
-            aranha->posicao.x -= PASSO_ARANHA;
+            nova_posicao.x = aranha->posicao.x -= PASSO_ARANHA;
 
-            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
+            if(verifica_movimento_aranha(nova_posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
+            } else {
+                aranha->posicao = nova_posicao;
             }
 
             break;
         case esq_cima:
-            aranha->posicao.y += PASSO_ARANHA;
-            aranha->posicao.x -= PASSO_ARANHA;
+            nova_posicao.x = aranha->posicao.x -= PASSO_ARANHA;
+            nova_posicao.y = aranha->posicao.y -= PASSO_ARANHA;
 
-            if(verifica_movimento_aranha(aranha->posicao, cogumelos, fazendeiro)) {
+            if(verifica_movimento_aranha(nova_posicao, cogumelos, fazendeiro)) {
                 inverte_movimento(aranha);
+            } else {
+                aranha->posicao = nova_posicao;
             }
 
             break;
@@ -164,27 +182,29 @@ void testa_colisao_aranha_base(ARANHA *aranha) {
     }
 }
 
-void move_aranhas(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], int total_aranhas) {
+void move_aranhas(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], int total_aranhas, STATUS_JOGO *status_jogo) {
     int i, colidiu_com_fazendeiro;
 
     for(i = 0; i < total_aranhas; i++) {
+        colidiu_com_fazendeiro = 0;
         move_aranha(&(aranhas[i]), cogumelos, *fazendeiro);
 
-        colidiu_com_fazendeiro = verifica_colisao(aranhas[i].posicao, TAMANHO_ARANHA, fazendeiro->posicao, TAMANHO_JOGADOR);
-        fazendeiro->doente += colidiu_com_fazendeiro;
+        colidiu_com_fazendeiro += verifica_colisao(aranhas[i].posicao, TAMANHO_ARANHA, fazendeiro->posicao, TAMANHO_JOGADOR);
 
-        if (colidiu_com_fazendeiro) {
-            fazendeiro->status = paralisado;
-            fazendeiro->vidas -= 1;
-
-            WaitTime(3);
-
-            // fazendeiro->status = livre;
+        if (colidiu_com_fazendeiro && fazendeiro->contador_invulneravel == 0 && aranhas[i].status) { // Se uma aranha viva colidir com o fazendeiro, e ele estiver vulneravel
+            if (fazendeiro->doente){ // Se ja estiver doente, morre
+                fazendeiro_morre(fazendeiro, status_jogo);
+            } else { // Se nao, paralisa o fazendeiro, deixa ele invulneravel por algum tempo e doente
+                fazendeiro->doente = NUM_COGUMELOS_CURAR_ARANHA;
+                fazendeiro->contador_paralisado = TEMPO_PARALISIA * FRAMERATE;
+                fazendeiro->contador_invulneravel = TEMPO_INVULNERAVEL * FRAMERATE;
+                fazendeiro->contador_doente = TEMPO_DOENTE * FRAMERATE;
+                fazendeiro->status = paralisado;
+            }
         }
 
         testa_colisao_aranha_base(&(aranhas[i]));
 
-        WaitTime(1);
     }
 }
 

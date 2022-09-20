@@ -12,9 +12,13 @@ void gera_fazendeiro(FAZENDEIRO *fazendeiro) {
     strcpy(fazendeiro->nome, "Jogador");
     fazendeiro->vidas = NUM_VIDAS;
     fazendeiro->tiros_restantes = NUM_TIROS;
+    fazendeiro->cooldown_tiro = 0;
     fazendeiro->cogumelos_colhidos = 0;
     fazendeiro->status = livre;
     fazendeiro->doente = 0;
+    fazendeiro->contador_paralisado = 0;
+    fazendeiro->contador_invulneravel = 0;
+    fazendeiro->contador_doente = 0;
 }
 
 void atirar(FAZENDEIRO *fazendeiro){
@@ -25,9 +29,10 @@ void atirar(FAZENDEIRO *fazendeiro){
     fazendeiro->tiros[tiro_atual].status = 1;
     fazendeiro->tiros[tiro_atual].direcao = fazendeiro->direcao;
     fazendeiro->tiros_restantes -= 1;
+    fazendeiro->cooldown_tiro = TEMPO_COOLDOWN_TIRO * FRAMERATE;
 }
 
-void verifica_impacto_tiro(TIRO *tiro, int *cogumelos_colhidos, COGUMELO cogumelos[]){
+void verifica_impacto_tiro(TIRO *tiro, int *cogumelos_colhidos, int *doente, COGUMELO cogumelos[]){
     if(tiro->posicao.x > LARGURA_TELA - MARGEM_JOGO_X - TAMANHO_TIRO){
         tiro->status = 0; // Verifica se o jogador ultrapassa a parede da direita
     } else if(tiro->posicao.x < MARGEM_JOGO_X + DIMENSAO_RETANGULO_BORDA) {
@@ -38,8 +43,12 @@ void verifica_impacto_tiro(TIRO *tiro, int *cogumelos_colhidos, COGUMELO cogumel
         tiro->status = 0; // Verifica se o jogador ultrapassa a parede de baixo
     } else if(verifica_colisao_cogumelos(tiro->posicao, TAMANHO_TIRO, cogumelos, NUM_COGUMELOS)){
         tiro->status = 0; // Verifica se o tiro colide com algum cogumelo.
-        *cogumelos_colhidos += 1;
         acertou_cogumelo(tiro->posicao, cogumelos, NUM_COGUMELOS);
+        if(*doente) {
+            *doente -= 1;
+        } else {
+            *cogumelos_colhidos += 1;
+        }
     }
 }
 
@@ -48,9 +57,55 @@ void verifica_tiros(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[]){
 
     for (i = 0; i < NUM_TIROS; i++){
         if (fazendeiro->tiros[i].status){
-            verifica_impacto_tiro(&fazendeiro->tiros[i], &fazendeiro->cogumelos_colhidos, cogumelos);
+            verifica_impacto_tiro(&fazendeiro->tiros[i], &fazendeiro->cogumelos_colhidos, &fazendeiro->doente, cogumelos);
         }
     }
+}
+
+void revive_fazendeiro(FAZENDEIRO *fazendeiro){
+    fazendeiro->posicao.x = LARGURA_TELA / 2;
+    fazendeiro->posicao.y = ALTURA_TELA - MARGEM_JOGO_Y - DIMENSAO_RETANGULO_BORDA - TAMANHO_JOGADOR;
+    fazendeiro->direcao = cima;
+    fazendeiro->vidas -= 1;
+    fazendeiro->cooldown_tiro = 0;
+    fazendeiro->status = livre;
+    fazendeiro->doente = 0;
+    fazendeiro->contador_paralisado = 0;
+    fazendeiro->contador_invulneravel = 0;
+    fazendeiro->contador_doente = 0;
+}
+
+void fazendeiro_morre(FAZENDEIRO *fazendeiro, STATUS_JOGO *status_jogo){
+    if(fazendeiro->vidas > 1){
+        revive_fazendeiro(fazendeiro);
+    } else {
+        fazendeiro->status = morto;
+        *status_jogo = game_over;
+    }
+}
+
+void atualiza_status_fazendeiro(FAZENDEIRO *fazendeiro, STATUS_JOGO *status_jogo){
+    // Diminui os contadores uma vez por frame
+    if (fazendeiro->cooldown_tiro){
+        fazendeiro->cooldown_tiro--;
+    }
+    if (fazendeiro->contador_paralisado){
+        fazendeiro->status = paralisado;
+        fazendeiro->contador_paralisado--;
+    } else {
+        fazendeiro->status = livre;
+    }
+    if (fazendeiro->contador_invulneravel){
+        fazendeiro->contador_invulneravel--;
+    }
+    if (fazendeiro->contador_doente){
+        fazendeiro->contador_doente--;
+    } else {
+        if(fazendeiro->doente){ // Se o contador de doente chegar a 0 e o fazendeiro ainda não tiver se curado, morre
+            fazendeiro_morre(fazendeiro, status_jogo);
+        }
+    }
+
 }
 
 void movimenta_tiros(TIRO tiros[]){
@@ -142,28 +197,28 @@ void movimenta_jogador(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[]) {
     if(IsKeyDown(KEY_UP)){
         nova_posicao.x = fazendeiro->posicao.x;
         nova_posicao.y = fazendeiro->posicao.y - MOVIMENTO;
-        if (verifica_movimento_jogador(nova_posicao, cogumelos)) {
+        if (verifica_movimento_jogador(nova_posicao, cogumelos) && fazendeiro->status == livre) {
             fazendeiro->posicao = nova_posicao;
         }
     }
     if(IsKeyDown(KEY_RIGHT)){
         nova_posicao.x = fazendeiro->posicao.x + MOVIMENTO;
         nova_posicao.y = fazendeiro->posicao.y;
-        if (verifica_movimento_jogador(nova_posicao, cogumelos)) {
+        if (verifica_movimento_jogador(nova_posicao, cogumelos) && fazendeiro->status == livre) {
             fazendeiro->posicao = nova_posicao;
         }
     }
     if(IsKeyDown(KEY_DOWN)){
         nova_posicao.x = fazendeiro->posicao.x;
         nova_posicao.y = fazendeiro->posicao.y + MOVIMENTO;
-        if (verifica_movimento_jogador(nova_posicao, cogumelos)) {
+        if (verifica_movimento_jogador(nova_posicao, cogumelos) && fazendeiro->status == livre) {
             fazendeiro->posicao = nova_posicao;
         }
     }
     if(IsKeyDown(KEY_LEFT)){
         nova_posicao.x = fazendeiro->posicao.x - MOVIMENTO;
         nova_posicao.y = fazendeiro->posicao.y;
-        if (verifica_movimento_jogador(nova_posicao, cogumelos)) {
+        if (verifica_movimento_jogador(nova_posicao, cogumelos) && fazendeiro->status == livre) {
             fazendeiro->posicao = nova_posicao;
         }
     }
@@ -177,7 +232,8 @@ void comandos_jogador(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumel
     switch(GetKeyPressed()) {
 
         case KEY_SPACE:
-            if (fazendeiro->tiros_restantes > 0 && fazendeiro->status == livre && *status_jogo == normal){
+            // Se tem tiros, está livre e sem cooldown de tiro anterior, e o jogo não está pausado, atira
+            if (fazendeiro->tiros_restantes && fazendeiro->status == livre && *status_jogo == normal && !fazendeiro->cooldown_tiro){
                 atirar(fazendeiro);
             }
             break;

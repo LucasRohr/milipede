@@ -5,6 +5,22 @@
 #include "definicoes.h"
 #include "ranking.h"
 
+void carrega_texturas(Texture2D texturas[]){
+    texturas[I_TEXTURA_FAZENDEIRO] = LoadTexture("imagens/fazendeiro.png");
+    texturas[I_TEXTURA_COGUMELO] = LoadTexture("imagens/cogumelo.png");
+    texturas[I_TEXTURA_ARANHA] = LoadTexture("imagens/aranha.png");
+    texturas[I_TEXTURA_MILIPEDE_CABECA] = LoadTexture("imagens/milipede-cabeca.png");
+    texturas[I_TEXTURA_MILIPEDE_CORPO] = LoadTexture("imagens/milipede-corpo.png");
+}
+
+void descarrega_texturas(Texture2D texturas[]){
+    UnloadTexture(texturas[I_TEXTURA_FAZENDEIRO]);
+    UnloadTexture(texturas[I_TEXTURA_COGUMELO]);
+    UnloadTexture(texturas[I_TEXTURA_ARANHA]);
+    UnloadTexture(texturas[I_TEXTURA_MILIPEDE_CABECA]);
+    UnloadTexture(texturas[I_TEXTURA_MILIPEDE_CORPO]);
+}
+
 void desenha_moldura() {
     int i;
 
@@ -40,7 +56,7 @@ void desenha_menu_inferior(char itens_menu[][TAMANHO_STR], FAZENDEIRO fazendeiro
     int i;
     float pos = 0;
 
-    // Convers�o de int para str
+    // Conversao de int para str
     sprintf(itens_menu[1], "%d", fazendeiro.cogumelos_colhidos);
     sprintf(itens_menu[3], "%d", num_cogumelos - fazendeiro.cogumelos_colhidos);
     sprintf(itens_menu[5], "%d", fazendeiro.vidas);
@@ -49,26 +65,35 @@ void desenha_menu_inferior(char itens_menu[][TAMANHO_STR], FAZENDEIRO fazendeiro
     // Loop para desenho do menu. Texto em cinza, n�meros em branco.
     for(i = 0; i < NUM_ITEMS_MENU * 2; i++){
         if(i % 2 == 0){
-            DrawText(itens_menu[i], MARGEM_JOGO_X + (LARGURA_TELA) * pos, ALTURA_TELA - MARGEM_JOGO_Y + 10, TAMANHO_FONTE, GRAY);
+            DrawText(itens_menu[i], MARGEM_JOGO_X + (LARGURA_TELA) * pos, ALTURA_TELA - MARGEM_JOGO_Y + MARGEM_RETANGULO_BORDA, TAMANHO_FONTE, GRAY);
         } else {
-            DrawText(itens_menu[i], MARGEM_JOGO_X + (LARGURA_TELA) * pos, ALTURA_TELA - MARGEM_JOGO_Y + 10, TAMANHO_FONTE, WHITE);
+            DrawText(itens_menu[i], MARGEM_JOGO_X + (LARGURA_TELA) * pos, ALTURA_TELA - MARGEM_JOGO_Y + MARGEM_RETANGULO_BORDA, TAMANHO_FONTE, WHITE);
         }
         pos = pos + 0.125;
     }
 }
 
-void desenha_jogador(FAZENDEIRO fazendeiro) {
-    Image fazendeiro_imagem = LoadImage("imagens/fazendeiro.png");
+void desenha_contador_doente(char itens[][TAMANHO_STR], FAZENDEIRO fazendeiro){
+    // Conversao de int para str
+    sprintf(itens[0], "%d", fazendeiro.doente);
+    sprintf(itens[1], "%d", fazendeiro.contador_doente);
 
+    if (fazendeiro.doente){
+        DrawText(itens[0], MARGEM_JOGO_X + MARGEM_RETANGULO_BORDA + DIMENSAO_RETANGULO_BORDA, MARGEM_JOGO_Y + MARGEM_RETANGULO_BORDA + DIMENSAO_RETANGULO_BORDA, TAMANHO_FONTE, GREEN);
+        DrawText(itens[1], MARGEM_JOGO_X + MARGEM_RETANGULO_BORDA + DIMENSAO_RETANGULO_BORDA, MARGEM_JOGO_Y + MARGEM_RETANGULO_BORDA + DIMENSAO_RETANGULO_BORDA + TAMANHO_FONTE, TAMANHO_FONTE, WHITE);
+    }
+}
+
+void desenha_jogador(FAZENDEIRO fazendeiro, Texture2D textura) {
     if (fazendeiro.status == paralisado) {
-        ImageColorInvert(&fazendeiro_imagem);
+        DrawTexture(textura, fazendeiro.posicao.x, fazendeiro.posicao.y, RED);
+    } else if (fazendeiro.doente) {
+        DrawTexture(textura, fazendeiro.posicao.x, fazendeiro.posicao.y, GREEN);
+    } else {
+        DrawTexture(textura, fazendeiro.posicao.x, fazendeiro.posicao.y, WHITE);
     }
 
-    Texture2D textura_fazendeiro = LoadTextureFromImage(fazendeiro_imagem);
 
-    DrawTexture(textura_fazendeiro, fazendeiro.posicao.x, fazendeiro.posicao.y, WHITE);
-
-    UnloadImage(fazendeiro_imagem);
 }
 
 void desenha_tiros(TIRO tiros[], int num_tiros){
@@ -81,17 +106,12 @@ void desenha_tiros(TIRO tiros[], int num_tiros){
     }
 }
 
-void desenha_cogumelos(COGUMELO cogumelos[], int num_cogumelos){
+void desenha_cogumelos(COGUMELO cogumelos[], int num_cogumelos, Texture2D textura){
     int i;
-
-    Image cogumelo_imagem = LoadImage("imagens/cogumelo.png");
-    Texture2D textura_cogumelo = LoadTextureFromImage(cogumelo_imagem);
-
-    UnloadImage(cogumelo_imagem);
 
     for (i = 0; i < NUM_COGUMELOS; i++){
         if (cogumelos[i].status) {
-            DrawTexture(textura_cogumelo, cogumelos[i].posicao.x, cogumelos[i].posicao.y, WHITE);
+            DrawTexture(textura, cogumelos[i].posicao.x, cogumelos[i].posicao.y, WHITE);
         }
     }
 }
@@ -139,44 +159,31 @@ void desenha_menu_pausa(char texto[], char input[]){
     DrawRectangle(0, ALTURA_TELA * 0.7, LARGURA_TELA, ALTURA_TELA * 0.7, WHITE); // Desenha margens brancas no menu de pausa
     DrawRectangle(MARGEM_JOGO_X, ALTURA_TELA * 0.7 + MARGEM_JOGO_X, LARGURA_TELA - MARGEM_JOGO_X * 2, ALTURA_TELA * 0.3 - MARGEM_JOGO_X * 2, BLACK); // Desenha retangulo preto atrás do texto
     DrawText(texto, MARGEM_JOGO_X * 2, ALTURA_TELA* 0.8, TAMANHO_FONTE, WHITE);
-    DrawText(input, MARGEM_JOGO_X * 2, ALTURA_TELA * 0.9
-             , TAMANHO_FONTE, WHITE);
+    DrawText(input, MARGEM_JOGO_X * 2, ALTURA_TELA * 0.9, TAMANHO_FONTE, WHITE);
 }
 
-void desenha_aranhas(ARANHA aranhas[], int total_aranhas) {
+void desenha_aranhas(ARANHA aranhas[], int total_aranhas, Texture2D textura) {
     int i;
-
-    Image aranha = LoadImage("imagens/aranha.png");
-    Texture2D textura_aranha = LoadTextureFromImage(aranha);
-
-    UnloadImage(aranha);
 
     for(i = 0; i < total_aranhas; i++) {
         if (aranhas[i].status) {
-            DrawTexture(textura_aranha, aranhas[i].posicao.x, aranhas[i].posicao.y, WHITE);
+            DrawTexture(textura, aranhas[i].posicao.x, aranhas[i].posicao.y, WHITE);
         }
     }
 }
 
-void desenha_milipede(MILIPEDE milipede) {
+void desenha_milipede(MILIPEDE milipede, Texture2D textura_cabeca, Texture2D textura_corpo) {
     int i;
-    
-    Image cabeca_imagem = LoadImage("imagens/milipede-cabeca.png");
-    Texture2D textura_cabeca = LoadTextureFromImage(cabeca_imagem);
-
-    Image corpo_imagem = LoadImage("imagens/milipede-corpo.png");
-    Texture2D textura_corpo = LoadTextureFromImage(corpo_imagem); 
 
     DrawTexture(textura_cabeca, milipede.posicao_cabeca.x, milipede.posicao_cabeca.y, WHITE);
-
-    for (i = 0; i < milipede.tamanho; i++) {
-        if (milipede.dir == dir_mili) {
-            DrawTexture(textura_corpo, milipede.posicao_cabeca.x - (TAMANHO_SEGMENTO_MILIPEDE * (i + 1)), milipede.posicao_cabeca.y, WHITE);
-        } else {
-            DrawTexture(textura_corpo, milipede.posicao_cabeca.x + (TAMANHO_SEGMENTO_MILIPEDE * (i + 1)), milipede.posicao_cabeca.y, WHITE);
+    if(milipede.status){
+        for (i = 0; i < milipede.tamanho; i++) {
+            if (milipede.dir == dir_mili) {
+                DrawTexture(textura_corpo, milipede.posicao_cabeca.x - (TAMANHO_SEGMENTO_MILIPEDE * (i + 1)), milipede.posicao_cabeca.y, WHITE);
+            } else {
+                DrawTexture(textura_corpo, milipede.posicao_cabeca.x + (TAMANHO_SEGMENTO_MILIPEDE * (i + 1)), milipede.posicao_cabeca.y, WHITE);
+            }
         }
     }
 
-    UnloadImage(cabeca_imagem);
-    UnloadImage(corpo_imagem);
 }
