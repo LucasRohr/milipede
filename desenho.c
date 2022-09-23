@@ -52,13 +52,13 @@ void desenha_menu_superior(char itens_menu[][TAMANHO_STR]){
     }
 }
 
-void desenha_menu_inferior(char itens_menu[][TAMANHO_STR], FAZENDEIRO fazendeiro, int num_cogumelos){
+void desenha_menu_inferior(char itens_menu[][TAMANHO_STR], FAZENDEIRO fazendeiro, int num_cogumelos_restantes){
     int i;
     float pos = 0;
 
     // Conversao de int para str
     sprintf(itens_menu[1], "%d", fazendeiro.cogumelos_colhidos);
-    sprintf(itens_menu[3], "%d", num_cogumelos - fazendeiro.cogumelos_colhidos);
+    sprintf(itens_menu[3], "%d", num_cogumelos_restantes);
     sprintf(itens_menu[5], "%d", fazendeiro.vidas);
     sprintf(itens_menu[7], "%d", fazendeiro.tiros_restantes);
 
@@ -109,7 +109,7 @@ void desenha_tiros(TIRO tiros[], int num_tiros){
 void desenha_cogumelos(COGUMELO cogumelos[], int num_cogumelos, Texture2D textura){
     int i;
 
-    for (i = 0; i < NUM_COGUMELOS; i++){
+    for (i = 0; i < num_cogumelos; i++){
         if (cogumelos[i].status) {
             DrawTexture(textura, cogumelos[i].posicao.x, cogumelos[i].posicao.y, WHITE);
         }
@@ -160,6 +160,10 @@ void desenha_menu_pausa(char texto[], char input[]){
     DrawRectangle(MARGEM_JOGO_X, ALTURA_TELA * 0.7 + MARGEM_JOGO_X, LARGURA_TELA - MARGEM_JOGO_X * 2, ALTURA_TELA * 0.3 - MARGEM_JOGO_X * 2, BLACK); // Desenha retangulo preto atrás do texto
     DrawText(texto, MARGEM_JOGO_X * 2, ALTURA_TELA* 0.8, TAMANHO_FONTE, WHITE);
     DrawText(input, MARGEM_JOGO_X * 2, ALTURA_TELA * 0.9, TAMANHO_FONTE, WHITE);
+}
+
+void desenha_menu_inicio_fase(char texto[]){
+    DrawText(texto, LARGURA_TELA / 2.5, ALTURA_TELA / 2, TAMANHO_FONTE * 2, WHITE);
 }
 
 void desenha_aranhas(ARANHA aranhas[], int total_aranhas, Texture2D textura) {

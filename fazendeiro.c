@@ -9,11 +9,8 @@ void gera_fazendeiro(FAZENDEIRO *fazendeiro) {
     fazendeiro->posicao.x = LARGURA_TELA / 2;
     fazendeiro->posicao.y = ALTURA_TELA - MARGEM_JOGO_Y - DIMENSAO_RETANGULO_BORDA - TAMANHO_JOGADOR;
     fazendeiro->direcao = cima;
-    strcpy(fazendeiro->nome, "Jogador");
-    fazendeiro->vidas = NUM_VIDAS;
     fazendeiro->tiros_restantes = NUM_TIROS;
     fazendeiro->cooldown_tiro = 0;
-    fazendeiro->cogumelos_colhidos = 0;
     fazendeiro->status = livre;
     fazendeiro->doente = 0;
     fazendeiro->contador_paralisado = 0;
@@ -32,7 +29,7 @@ void atirar(FAZENDEIRO *fazendeiro){
     fazendeiro->cooldown_tiro = TEMPO_COOLDOWN_TIRO * FRAMERATE;
 }
 
-void verifica_impacto_tiro(TIRO *tiro, int *cogumelos_colhidos, int *doente, COGUMELO cogumelos[]){
+void verifica_impacto_tiro(TIRO *tiro, int *cogumelos_colhidos, int *doente, COGUMELO cogumelos[], int num_cogumelos){
     if(tiro->posicao.x > LARGURA_TELA - MARGEM_JOGO_X - TAMANHO_TIRO){
         tiro->status = 0; // Verifica se o jogador ultrapassa a parede da direita
     } else if(tiro->posicao.x < MARGEM_JOGO_X + DIMENSAO_RETANGULO_BORDA) {
@@ -41,9 +38,9 @@ void verifica_impacto_tiro(TIRO *tiro, int *cogumelos_colhidos, int *doente, COG
         tiro->status = 0; // Verifica se o jogador vai acima do 1/4 inferior da tela
     } else if(tiro->posicao.y > ALTURA_TELA - MARGEM_JOGO_Y - TAMANHO_TIRO){
         tiro->status = 0; // Verifica se o jogador ultrapassa a parede de baixo
-    } else if(verifica_colisao_cogumelos(tiro->posicao, TAMANHO_TIRO, cogumelos, NUM_COGUMELOS)){
+    } else if(verifica_colisao_cogumelos(tiro->posicao, TAMANHO_TIRO, cogumelos, num_cogumelos)){
         tiro->status = 0; // Verifica se o tiro colide com algum cogumelo.
-        acertou_cogumelo(tiro->posicao, cogumelos, NUM_COGUMELOS);
+        acertou_cogumelo(tiro->posicao, cogumelos, num_cogumelos);
         if(*doente) {
             *doente -= 1;
         } else {
@@ -52,12 +49,12 @@ void verifica_impacto_tiro(TIRO *tiro, int *cogumelos_colhidos, int *doente, COG
     }
 }
 
-void verifica_tiros(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[]){
+void verifica_tiros(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], int num_cogumelos){
     int i;
 
     for (i = 0; i < NUM_TIROS; i++){
         if (fazendeiro->tiros[i].status){
-            verifica_impacto_tiro(&fazendeiro->tiros[i], &fazendeiro->cogumelos_colhidos, &fazendeiro->doente, cogumelos);
+            verifica_impacto_tiro(&fazendeiro->tiros[i], &fazendeiro->cogumelos_colhidos, &fazendeiro->doente, cogumelos, num_cogumelos);
         }
     }
 }
@@ -150,7 +147,7 @@ void movimenta_tiros(TIRO tiros[]){
     }
 }
 
-int verifica_movimento_jogador(COORD posicao, COGUMELO cogumelos[]){
+int verifica_movimento_jogador(COORD posicao, COGUMELO cogumelos[], int num_cogumelos){
     // Verifica se � poss�vel o jogador fazer algum movimento. Recebe a nova posicao, nao a atual.
     // Retorna 1 se o movimento � poss�vel, 0 se n�o
     int flag = 1;
@@ -163,7 +160,7 @@ int verifica_movimento_jogador(COORD posicao, COGUMELO cogumelos[]){
         flag = 0; // Verifica se o jogador vai acima do 1/4 inferior da tela
     } else if(posicao.y > (ALTURA_TELA - MARGEM_JOGO_Y - TAMANHO_JOGADOR)){
         flag = 0; // Verifica se o jogador ultrapassa a parede de baixo
-    } else if(verifica_colisao_cogumelos(posicao, TAMANHO_JOGADOR, cogumelos, NUM_COGUMELOS)){
+    } else if(verifica_colisao_cogumelos(posicao, TAMANHO_JOGADOR, cogumelos, num_cogumelos)){
         flag = 0; // Verifica se o jogador colide com algum cogumelo
     }
 
@@ -190,35 +187,35 @@ void muda_direcao_jogador(DIRECAO *direcao){
     }
 }
 
-void movimenta_jogador(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[]) {
+void movimenta_jogador(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], int num_cogumelos) {
     // Funcao para movimentar o jogador.
     COORD nova_posicao = {};
 
     if(IsKeyDown(KEY_UP)){
         nova_posicao.x = fazendeiro->posicao.x;
         nova_posicao.y = fazendeiro->posicao.y - MOVIMENTO;
-        if (verifica_movimento_jogador(nova_posicao, cogumelos) && fazendeiro->status == livre) {
+        if (verifica_movimento_jogador(nova_posicao, cogumelos, num_cogumelos) && fazendeiro->status == livre) {
             fazendeiro->posicao = nova_posicao;
         }
     }
     if(IsKeyDown(KEY_RIGHT)){
         nova_posicao.x = fazendeiro->posicao.x + MOVIMENTO;
         nova_posicao.y = fazendeiro->posicao.y;
-        if (verifica_movimento_jogador(nova_posicao, cogumelos) && fazendeiro->status == livre) {
+        if (verifica_movimento_jogador(nova_posicao, cogumelos, num_cogumelos) && fazendeiro->status == livre) {
             fazendeiro->posicao = nova_posicao;
         }
     }
     if(IsKeyDown(KEY_DOWN)){
         nova_posicao.x = fazendeiro->posicao.x;
         nova_posicao.y = fazendeiro->posicao.y + MOVIMENTO;
-        if (verifica_movimento_jogador(nova_posicao, cogumelos) && fazendeiro->status == livre) {
+        if (verifica_movimento_jogador(nova_posicao, cogumelos, num_cogumelos) && fazendeiro->status == livre) {
             fazendeiro->posicao = nova_posicao;
         }
     }
     if(IsKeyDown(KEY_LEFT)){
         nova_posicao.x = fazendeiro->posicao.x - MOVIMENTO;
         nova_posicao.y = fazendeiro->posicao.y;
-        if (verifica_movimento_jogador(nova_posicao, cogumelos) && fazendeiro->status == livre) {
+        if (verifica_movimento_jogador(nova_posicao, cogumelos, num_cogumelos) && fazendeiro->status == livre) {
             fazendeiro->posicao = nova_posicao;
         }
     }
