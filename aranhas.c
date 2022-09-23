@@ -80,11 +80,11 @@ int verifica_movimento_aranha(COORD posicao, COGUMELO cogumelos[], FAZENDEIRO fa
     return flag;
 }
 
-void move_aranha(ARANHA *aranha, COGUMELO cogumelos[], FAZENDEIRO fazendeiro) {
+void move_aranha(ARANHA *aranha, COGUMELO cogumelos[], int num_cogumelos, FAZENDEIRO fazendeiro) {
     DIRECAO direcao_aranha = aranha->dir;
     COORD nova_posicao = {};
 
-    verifica_colisao_aranha_cogumelos(*aranha, cogumelos, NUM_COGUMELOS);
+    verifica_colisao_aranha_cogumelos(*aranha, cogumelos, num_cogumelos);
 
     switch(direcao_aranha) {
         case cima:
@@ -182,12 +182,12 @@ void testa_colisao_aranha_base(ARANHA *aranha) {
     }
 }
 
-void move_aranhas(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], int total_aranhas, STATUS_JOGO *status_jogo) {
+void move_aranhas(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], CONFIG_FASE config_fase, STATUS_JOGO *status_jogo) {
     int i, colidiu_com_fazendeiro;
 
-    for(i = 0; i < total_aranhas; i++) {
+    for(i = 0; i < config_fase.num_aranhas; i++) {
         colidiu_com_fazendeiro = 0;
-        move_aranha(&(aranhas[i]), cogumelos, *fazendeiro);
+        move_aranha(&(aranhas[i]), cogumelos, config_fase.num_cogumelos, *fazendeiro);
 
         colidiu_com_fazendeiro += verifica_colisao(aranhas[i].posicao, TAMANHO_ARANHA, fazendeiro->posicao, TAMANHO_JOGADOR);
 
