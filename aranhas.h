@@ -6,3 +6,4 @@ void move_aranha(ARANHA *aranha, COGUMELO cogumelos[], int num_cogumelos, FAZEND
 void testa_colisao_aranha_base(ARANHA *aranha);
 void move_aranhas(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], CONFIG_FASE config_fase, STATUS_JOGO *status_jogo);
 void gera_todas_aranhas(ARANHA aranhas[], int total_aranhas);
+void verifica_tiros_aranhas(FAZENDEIRO *fazendeiro, ARANHA aranhas[], int num_aranhas);
