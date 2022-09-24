@@ -179,9 +179,9 @@ void desenha_aranhas(ARANHA aranhas[], int total_aranhas, Texture2D textura) {
 void desenha_milipede(MILIPEDE milipede, Texture2D textura_cabeca, Texture2D textura_corpo) {
     int i;
 
-    DrawTexture(textura_cabeca, milipede.posicao_cabeca.x, milipede.posicao_cabeca.y, WHITE);
     if(milipede.status){
         for (i = 0; i < milipede.tamanho; i++) {
+            DrawTexture(textura_cabeca, milipede.posicao_cabeca.x, milipede.posicao_cabeca.y, WHITE);
             if (milipede.dir == dir_mili) {
                 DrawTexture(textura_corpo, milipede.posicao_cabeca.x - (TAMANHO_SEGMENTO_MILIPEDE * (i + 1)), milipede.posicao_cabeca.y, WHITE);
             } else {
@@ -189,5 +189,4 @@ void desenha_milipede(MILIPEDE milipede, Texture2D textura_cabeca, Texture2D tex
             }
         }
     }
-
 }
