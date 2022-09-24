@@ -7,14 +7,12 @@
 #include "saves.h"
 #include "ranking.h"
 
-
-void menu_pausa(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], char input[], int *num_letras, STATUS_JOGO *status_jogo){
-
-    desenha_menu_pausa("Digite o nome para salvar e voltar ao jogo", input);
+void menu_pausa(char texto[], FAZENDEIRO *fazendeiro, ARANHA aranhas[], MILIPEDE *milipede, COGUMELO cogumelos[], CONFIG_FASE *config_fase, STATUS_JOGO *status_jogo, char input[], int *num_letras){
+    desenha_menu_pausa(texto, input);
 
     if(instanciar_nome(input, num_letras)){ // Verifica se o jogador acabou de digitar o nome para salvar o jogo e instanciar o nome do fazendeiro
         strcpy(fazendeiro->nome, input);
-        if(!salvar_jogo(fazendeiro, aranhas, cogumelos)){
+        if(!salvar_jogo(*fazendeiro, aranhas, *milipede, cogumelos, *config_fase)){
             printf("\n\nErro ao salvar jogo.\n\n");
         }
         *status_jogo = normal;
@@ -22,9 +20,8 @@ void menu_pausa(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], 
 
 }
 
-void menu_sair(FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char input[], int *num_letras, STATUS_JOGO *status_jogo, int *sair) {
-
-    desenha_menu_pausa("Digite o seu nome antes de sair (cancelar com ESC)", input);
+void menu_sair(char texto[], FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char input[], int *num_letras, STATUS_JOGO *status_jogo, int *sair) {
+    desenha_menu_pausa(texto, input);
 
     if(instanciar_nome(input, num_letras)){ // Verifica se o jogador acabou de digitar o nome, para sair o jogo e atualizar o ranking
         strcpy(fazendeiro->nome, input);
@@ -37,19 +34,17 @@ void menu_sair(FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char input[], int *n
     }
 }
 
-void menu_carregar(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], char input[], int *num_letras, STATUS_JOGO *status_jogo){
-
-    desenha_menu_pausa("Digite o seu nome para carregar.", input);
+void menu_carregar(char texto[], FAZENDEIRO *fazendeiro, ARANHA aranhas[], MILIPEDE *milipede, COGUMELO cogumelos[], CONFIG_FASE *config_fase, STATUS_JOGO *status_jogo, char input[], int *num_letras){
+    desenha_menu_pausa(texto, input);
 
     if(instanciar_nome(input, num_letras)){ // Verifica se o jogador acabou de digitar o nome para carregar o jogo
-        carregar_jogo(fazendeiro, aranhas, cogumelos, input);
+        carregar_jogo(fazendeiro, aranhas, milipede, cogumelos, config_fase, input);
         *status_jogo = normal;
     }
 }
 
-void menu_game_over(FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char input[], int *num_letras, STATUS_JOGO *status_jogo, int *sair){
-
-    desenha_menu_pausa("GAME OVER! Digite seu nome para salvar ranking.", input);
+void menu_game_over(char texto[], FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char input[], int *num_letras, STATUS_JOGO *status_jogo, int *sair){
+    desenha_menu_pausa(texto, input);
 
     if(instanciar_nome(input, num_letras)){ // Verifica se o jogador acabou de digitar o nome, para sair o jogo e atualizar o ranking
         strcpy(fazendeiro->nome, input);
@@ -61,6 +56,24 @@ void menu_game_over(FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char input[], i
         *sair = 1;
     }
 }
+
+void menu_inicio_fase(STATUS_JOGO *status_jogo, int fase, int *contador){
+    char texto[TAMANHO_STR] = "Fase ";
+    char num_fase[2] = {fase + '0', '\0'};
+
+    strcat(texto, num_fase);
+
+    if (*contador % FRAMERATE >= FRAMES_PISCAR_MENU){ // Para ter efeito de piscar na tela
+       desenha_menu_inicio_fase(texto);
+    }
+
+    if (*contador < 1) {
+        *status_jogo = normal;
+    } else {
+        *contador -= 1;
+    }
+}
+
 
 int instanciar_nome(char input[], int *num_letras){
     int tecla = GetCharPressed();
@@ -88,4 +101,3 @@ int instanciar_nome(char input[], int *num_letras){
         return 0;
     }
 }
-

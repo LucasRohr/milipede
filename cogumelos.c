@@ -24,14 +24,14 @@ int verifica_posicao_cogumelos(COGUMELO cogumelos[], int num_cogumelos, int x, i
 
 
 void gera_cogumelos(COGUMELO cogumelos[], int num_cogumelos) {
-    // Gera cogumelos em posi��es aleat�rias.
+    // Gera cogumelos em posicoes aleatorias.
     int i = 0, x, y;
     srand(time(0));
 
     while (i < num_cogumelos){
         x = gera_posicao_cogumelos(MARGEM_JOGO_X + DIMENSAO_RETANGULO_BORDA + TAMANHO_COGUMELO, LARGURA_TELA - MARGEM_JOGO_X - DIMENSAO_RETANGULO_BORDA);
         y = gera_posicao_cogumelos(MARGEM_JOGO_Y + DIMENSAO_RETANGULO_BORDA + TAMANHO_JOGADOR * 2, ALTURA_TELA - MARGEM_JOGO_Y - DIMENSAO_RETANGULO_BORDA - TAMANHO_JOGADOR * 2);
-        // Verifica se a posi��o j� est� ocupada. Se n�o, gera uma nova posi��o para o cogumelo.
+        // Verifica se a posicao ja esta ocupada. Se nao, gera uma nova posicao para o cogumelo.
 
         if (!verifica_posicao_cogumelos(cogumelos, num_cogumelos, x, y)){
             cogumelos[i].posicao.x = x;
@@ -65,10 +65,10 @@ void acertou_cogumelo(COORD posicao, COGUMELO cogumelos[], int num_cogumelos){
     }
 }
 
-int conta_cogumelos_restantes(COGUMELO cogumelos[], int total_cogumelos) {
+int conta_cogumelos_restantes(COGUMELO cogumelos[], int num_cogumelos) {
     int i, contador = 0;
 
-    for(i = 0; i < total_cogumelos; i++) {
+    for(i = 0; i < num_cogumelos; i++) {
         if (cogumelos[i].status == 1) {
             contador++;
         }
@@ -76,4 +76,3 @@ int conta_cogumelos_restantes(COGUMELO cogumelos[], int total_cogumelos) {
 
     return contador;
 }
-
