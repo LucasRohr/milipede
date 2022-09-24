@@ -26,18 +26,23 @@ void verifica_fim_fase(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aran
     if(!conta_cogumelos_restantes(cogumelos, config_fase->num_cogumelos)){ // Se todos cogumelos foram colhidos, muda a fase e incrementa as variaveis que variam com fase
         config_fase->fase += 1;
         *status_jogo = inicio_fase;
+
         if(config_fase->num_cogumelos + INCREMENTO_COGUMELOS <= NUM_COGUMELOS_MAX){
             config_fase->num_cogumelos += INCREMENTO_COGUMELOS;
         }
+
         if(config_fase->num_aranhas + INCREMENTO_ARANHA <= NUM_ARANHAS_MAX){
             config_fase->num_aranhas += INCREMENTO_ARANHA;
         }
+
         if(config_fase->tam_min_milipede + INCREMENTO_MILIPEDE <= TAMANHO_MIN_MILIPEDE_MAX){
             config_fase->tam_min_milipede += INCREMENTO_MILIPEDE;
         }
+
         if(config_fase->tam_max_milipede + INCREMENTO_MILIPEDE <= TAMANHO_MAX_MILIPEDE_MAX){
             config_fase->tam_max_milipede += INCREMENTO_MILIPEDE;
         }
+
         *contador_menu = TEMPO_INICIO_FASE * FRAMERATE;
         gera_elementos_jogo(fazendeiro, cogumelos, aranhas, milipede, config_fase); // Gera os elementos da nova fase
     }
@@ -48,7 +53,7 @@ void game_loop(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[], J
     int num_letras = 0;
     int contador_menu = TEMPO_INICIO_FASE * FRAMERATE;
 
-    // Textos dos menus (para não serem gerados novamente a cada loop da funcao)
+    // Textos dos menus (para nï¿½o serem gerados novamente a cada loop da funcao)
     char itens_menu_superior[NUM_ITEMS_MENU][TAMANHO_STR] = {"ESC-Sair", "C-Carregar", "P-Pausar", "R-Ranking"};
     char itens_menu_inferior[NUM_ITEMS_MENU * 2][TAMANHO_STR] = {"PTS", "", "COG", "", "VDS", "", "TRS", ""};
     char texto_menu_pausa[TAMANHO_STR] = "Digite o nome para salvar e voltar ao jogo";
@@ -89,7 +94,7 @@ void game_loop(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[], J
             menu_pausa(texto_menu_pausa, fazendeiro, aranhas, milipede, cogumelos, &config_fase, &status_jogo, input, &num_letras);
         } else if(status_jogo == carregando){ // Comandos se o jogo esta carregando
             menu_carregar(texto_menu_carregar, fazendeiro, aranhas, milipede, cogumelos, &config_fase, &status_jogo, input, &num_letras);
-        } else if(status_jogo == mostrando_ranking){ // Comandos se o ranking está sendo mostrado
+        } else if(status_jogo == mostrando_ranking){ // Comandos se o ranking estï¿½ sendo mostrado
             desenha_ranking(jogadores);
         } else if(status_jogo == saindo){ // Comandos se o jogador quer sair
             menu_sair(texto_menu_sair, fazendeiro, jogadores, input, &num_letras, &status_jogo, &sair);
@@ -98,13 +103,14 @@ void game_loop(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[], J
         } else if (status_jogo == inicio_fase){
             menu_inicio_fase(&status_jogo, config_fase.fase, &contador_menu);
         } else {
-            // Comandos se status do jogo é normal
+            // Comandos se status do jogo ï¿½ normal
             atualiza_status_fazendeiro(fazendeiro, &status_jogo);
             movimenta_jogador(fazendeiro, cogumelos, config_fase.num_cogumelos);
             move_aranhas(fazendeiro, aranhas, cogumelos, config_fase, &status_jogo);
             movimenta_tiros(fazendeiro->tiros);
             verifica_tiros(fazendeiro, cogumelos, config_fase.num_cogumelos);
             verifica_tiros_milipede(fazendeiro, milipede);
+            verifica_tiros_aranhas(fazendeiro, aranhas, config_fase.num_aranhas);
             movimenta_milipede(milipede, cogumelos, fazendeiro, config_fase, &status_jogo);
             verifica_fim_fase(fazendeiro, cogumelos, aranhas, milipede, &config_fase, &status_jogo, &contador_menu);
         }

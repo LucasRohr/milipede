@@ -180,6 +180,7 @@ void desenha_milipede(MILIPEDE milipede, Texture2D textura_cabeca, Texture2D tex
     int i;
 
     DrawTexture(textura_cabeca, milipede.posicao_cabeca.x, milipede.posicao_cabeca.y, WHITE);
+
     if(milipede.status){
         for (i = 0; i < milipede.tamanho; i++) {
             if (milipede.dir == dir_mili) {
@@ -189,5 +190,4 @@ void desenha_milipede(MILIPEDE milipede, Texture2D textura_cabeca, Texture2D tex
             }
         }
     }
-
 }

@@ -6,6 +6,8 @@
 #include <time.h>
 #include <math.h>
 
+// Gera milipede com atributos iniciais e tamanho random entre
+// intervalo possivel da fase atual
 void gera_milipede(MILIPEDE *milipede, int tam_min_milipede, int tam_max_milipede) {
     int tamanho_milipede = (int) (rand() % (tam_max_milipede - tam_min_milipede + 1) + tam_min_milipede);
 
@@ -18,6 +20,8 @@ void gera_milipede(MILIPEDE *milipede, int tam_min_milipede, int tam_max_miliped
     milipede->dir =  (int) (rand() % (dir_mili - esq_mili + 1));
 }
 
+// Altera o movimento da milipede espelhando o mesmo case ela
+// colida com uma parede
 void inverte_movimento_milipede(MILIPEDE *milipede) {
     DIRECAO_MILIPEDE direcao_milipede = milipede->dir;
 
@@ -32,7 +36,8 @@ void inverte_movimento_milipede(MILIPEDE *milipede) {
     milipede->posicao_cabeca.y += PASSO_VERTICAL_MILIPEDE;
 }
 
-// Verifica a colisao para cada cogumelo.
+// Verifica a colisao para cada cogumelo e a milipede, aumentando
+// o tamanho da mesma para cada um consumido
 void verifica_colisao_milipede_cogumelos(MILIPEDE *milipede, int tam_max_milipede, COGUMELO cogumelos[], int num_cogumelos) {
     int i = 0;
 
@@ -49,9 +54,9 @@ void verifica_colisao_milipede_cogumelos(MILIPEDE *milipede, int tam_max_miliped
     }
 }
 
+// Verifica se eh possivel a milipede fazer algum movimento. Recebe a nova posicao, nao a atual.
+// Retorna 1 se colide com um obstaculo, 0 se nao
 int verifica_movimento_milipede(int segmentos_milipede, COORD posicao, COGUMELO cogumelos[], FAZENDEIRO fazendeiro) {
-    // Verifica se é possível a milipede fazer algum movimento. Recebe a nova posicao, nao a atual.
-    // Retorna 1 se colide com um obstaculo, 0 se não
     int flag = 0;
     // int tamanho_milipede = TAMANHO_SEGMENTO_MILIPEDE * segmentos_milipede;
 
@@ -68,6 +73,7 @@ int verifica_movimento_milipede(int segmentos_milipede, COORD posicao, COGUMELO 
     return flag;
 }
 
+// Verifica se a milipede colidiu com a base para eliminar ela e gerar outra
 void testa_colisao_milipede_base(MILIPEDE *milipede, int tam_min_milipede, int tam_max_milipede) {
     if (milipede->posicao_cabeca.y >= (ALTURA_TELA - MARGEM_JOGO_Y - TAMANHO_SEGMENTO_MILIPEDE)) {
         milipede->status = 0;
@@ -75,26 +81,38 @@ void testa_colisao_milipede_base(MILIPEDE *milipede, int tam_min_milipede, int t
     }
 }
 
-void movimenta_milipede(MILIPEDE *milipede, COGUMELO cogumelos[], FAZENDEIRO *fazendeiro, CONFIG_FASE config_fase, STATUS_JOGO *status_jogo) {
+// Verifica se a milipede colidiu com o fazendeiro, matando ele caso ja esteja paralisado
+// ou paralisando o mesmo e demandando comer cogumelos caso nao esteja
+void verifica_colisao_milipede_fazendeiro(FAZENDEIRO *fazendeiro, MILIPEDE *milipede, CONFIG_FASE config_fase, STATUS_JOGO *status_jogo) {
     int colidiu_com_fazendeiro = 0;
-    DIRECAO direcao_milipede = milipede->dir;
 
-    verifica_colisao_milipede_cogumelos(milipede, config_fase.tam_max_milipede, cogumelos, config_fase.num_cogumelos);
     colidiu_com_fazendeiro += verifica_colisao(milipede->posicao_cabeca, TAMANHO_SEGMENTO_MILIPEDE, fazendeiro->posicao, TAMANHO_JOGADOR);
 
     if (colidiu_com_fazendeiro && fazendeiro->contador_invulneravel == 0) { // Se a milipede colidir com o fazendeiro, e ele estiver vulneravel
         if (fazendeiro->doente){ // Se ja estiver doente, morre
             fazendeiro_morre(fazendeiro, status_jogo);
-        } else { // Se nao, paralisa o fazendeiro, deixa ele invulneravel por algum tempo e doente, necessitando
-            fazendeiro->doente = milipede->tamanho + 1;
+        // Se nao, paralisa o fazendeiro, deixa ele invulneravel por algum tempo e doente, necessitando
+        // comer o nÃºmero de cogumelos igual ao de segmentos da milipede para sobreviver
+        } else {
+            fazendeiro->doente = milipede->tamanho ;
             fazendeiro->contador_paralisado = TEMPO_PARALISIA * FRAMERATE;
             fazendeiro->contador_invulneravel = TEMPO_INVULNERAVEL * FRAMERATE;
             fazendeiro->contador_doente = TEMPO_DOENTE * FRAMERATE;
             fazendeiro->status = paralisado;
         }
+
         milipede->status = 0;
         gera_milipede(milipede, config_fase.tam_min_milipede, config_fase.tam_max_milipede);
     }
+}
+
+// Move a milipede verificando colisoes com cogumelos e com o fazendeiro
+// Verifica tambem colisoes para troca de movimento
+void movimenta_milipede(MILIPEDE *milipede, COGUMELO cogumelos[], FAZENDEIRO *fazendeiro, CONFIG_FASE config_fase, STATUS_JOGO *status_jogo) {
+    DIRECAO direcao_milipede = milipede->dir;
+
+    verifica_colisao_milipede_cogumelos(milipede, config_fase.tam_max_milipede, cogumelos, config_fase.num_cogumelos);
+    verifica_colisao_milipede_fazendeiro(fazendeiro, milipede, config_fase, status_jogo);
 
     switch(direcao_milipede) {
         case esq_mili:
@@ -120,6 +138,9 @@ void movimenta_milipede(MILIPEDE *milipede, COGUMELO cogumelos[], FAZENDEIRO *fa
     testa_colisao_milipede_base(milipede, config_fase.tam_min_milipede, config_fase.tam_max_milipede);
 }
 
+// === Inicio -> Verificacao de tiro na milipede ===
+
+// Diminui um segmento da milipede ou mata ela se nao possui mais segmentos
 void acertou_milipede(MILIPEDE *milipede) {
     milipede->tamanho -= 1;
 
@@ -128,6 +149,7 @@ void acertou_milipede(MILIPEDE *milipede) {
     }
 }
 
+// Verifica impactos do tiro nas bases do cenario e com a milipede
 void verifica_impacto_tiro_milipede(TIRO *tiro, MILIPEDE *milipede) {
     if(tiro->posicao.x > LARGURA_TELA - MARGEM_JOGO_X - TAMANHO_TIRO){
         tiro->status = 0; // Verifica se o jogador ultrapassa a parede da direita
@@ -144,6 +166,7 @@ void verifica_impacto_tiro_milipede(TIRO *tiro, MILIPEDE *milipede) {
     }
 }
 
+// Verifica a colisao de cada tiro com a milipede
 void verifica_tiros_milipede(FAZENDEIRO *fazendeiro, MILIPEDE *milipede) {
     int i;
 
@@ -153,3 +176,5 @@ void verifica_tiros_milipede(FAZENDEIRO *fazendeiro, MILIPEDE *milipede) {
         }
     }
 }
+
+// === Fim -> Verificacao de tiro na milipede ===
