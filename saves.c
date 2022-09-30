@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Devolve um ESTADO_JOGO com o estado de todos os objetos relevantes para um save do jogo.
 ESTADO_JOGO cria_save(FAZENDEIRO fazendeiro, ARANHA aranhas[], MILIPEDE milipede, COGUMELO cogumelos[], CONFIG_FASE config_fase){
     int i;
     ESTADO_JOGO save;
@@ -20,9 +21,12 @@ ESTADO_JOGO cria_save(FAZENDEIRO fazendeiro, ARANHA aranhas[], MILIPEDE milipede
     return (save);
 }
 
+// Cria um arquivo <nomedojogador>.bin com o estado atual de todos os objetos relevantes do jogo.
+// Devolve 0 se nenhum erro ocorreu.
 int salvar_jogo(FAZENDEIRO fazendeiro, ARANHA aranhas[], MILIPEDE milipede, COGUMELO cogumelos[], CONFIG_FASE config_fase){
     ESTADO_JOGO save = cria_save(fazendeiro, aranhas, milipede, cogumelos, config_fase);
     FILE *arq;
+    int erro = 0;
     char nome_arquivo[TAMANHO_STR] = "";
 
     // Gera o nome do arquivo, formato <nome_jogador>.bin
@@ -33,17 +37,18 @@ int salvar_jogo(FAZENDEIRO fazendeiro, ARANHA aranhas[], MILIPEDE milipede, COGU
 
     if (arq){
         if (fwrite(&save, sizeof(ESTADO_JOGO), 1, arq) != 1){
-            return 0;
+            erro += 1;
         }
     } else {
-        return 0;
+        erro += 1;
     }
 
     fclose(arq);
 
-    return 1;
+    return erro;
 }
 
+// Reinstancia os elementos do jogo a partir de um ESTADO_JOGO.
 void instanciar_jogo(ESTADO_JOGO save, FAZENDEIRO *fazendeiro, ARANHA aranhas[], MILIPEDE *milipede, COGUMELO cogumelos[], CONFIG_FASE *config_fase){
     int i;
 
@@ -59,8 +64,11 @@ void instanciar_jogo(ESTADO_JOGO save, FAZENDEIRO *fazendeiro, ARANHA aranhas[],
     }
 }
 
+// Carrega um arquivo <nomedojogador>.bin com o estado atual de todos os objetos relevantes do jogo.
+// Devolve 0 se nenhum erro ocorreu.
 int carregar_jogo(FAZENDEIRO *fazendeiro, ARANHA aranhas[], MILIPEDE *milipede, COGUMELO cogumelos[], CONFIG_FASE *config_fase, char input[]){
     ESTADO_JOGO save;
+    int erro = 0;
     FILE *arq;
 
     char nome_arquivo[TAMANHO_STR] = "";
@@ -72,15 +80,15 @@ int carregar_jogo(FAZENDEIRO *fazendeiro, ARANHA aranhas[], MILIPEDE *milipede, 
     arq = fopen(nome_arquivo, "rb");
     if (arq){ // Se o arquivo existe, instancia o jogo.
         if (fread(&save, sizeof(ESTADO_JOGO), 1, arq) != 1){
-            printf("\n\nErro na leitura de arquivo\n\n");
+            erro += 1;
         }
         instanciar_jogo(save, fazendeiro, aranhas, milipede, cogumelos, config_fase);
     } else {
-        printf("\n\nErro na abertura de arquivo\n\n");
+        erro += 1;
     }
 
     fclose(arq);
 
-    return 0;
+    return erro;
 }
 
