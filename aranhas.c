@@ -17,34 +17,34 @@ void gera_aranha(ARANHA *aranha) {
 }
 
 // Funcao para mudar a direcao de movimento da aranha caso a mesma colida
-// com algum extremo da tela que nÃ£o seja o fim dela
+// com algum extremo da tela que não seja o fim dela
 void inverte_movimento(ARANHA *aranha) {
     DIRECAO direcao_aranha = aranha->dir;
 
     switch(direcao_aranha) {
         case(cima):
-            aranha->dir = (int) (rand() % (esq_baixo - dir_baixo + 1)) + dir_baixo;
+            aranha->dir = GetRandomValue(esq_baixo, dir_baixo);
             break;
         case(dir_cima):
-            aranha->dir = (int) (rand() % (esq_cima - dir_baixo + 1)) + dir_baixo;
+            aranha->dir = GetRandomValue(esq_cima, dir_baixo);
             break;
         case(dir):
-            aranha->dir = (int) (rand() % (esq_cima - esq_baixo + 1)) + esq_baixo;
+            aranha->dir = GetRandomValue(esq_cima, esq_baixo);
             break;
         case(dir_baixo):
-            aranha->dir = (int) (rand() % (esq_cima - esq_baixo + 1)) + esq_baixo;
+            aranha->dir = GetRandomValue(esq_cima, esq_baixo);
             break;
         case(baixo):
             aranha->dir = esq_cima;
             break;
         case(esq_baixo):
-            aranha->dir = (int) (rand() % (dir_baixo - cima + 1)) + cima;
+            aranha->dir = GetRandomValue(dir_cima, dir_baixo);
             break;
         case(esq):
-            aranha->dir = (int) (rand() % (dir_baixo - dir_cima + 1)) + dir_cima;
+            aranha->dir = GetRandomValue(dir_baixo, dir_cima);
             break;
         case(esq_cima):
-            aranha->dir = (int) (rand() % (esq_baixo - dir_cima + 1)) + dir_cima;
+            aranha->dir = GetRandomValue(dir_cima, esq_baixo);
             break;
         default:
             break;
@@ -228,61 +228,3 @@ void gera_todas_aranhas(ARANHA aranhas[], int total_aranhas) {
         gera_aranha(&(aranhas[i]));
     }
 }
-
-// === Inicio -> Verificacao de tiro nas aranhas ===
-
-// Retorna flag de verificao para caso aranha colidir com um objeto de tiro
-int verifica_colisao_tiro_aranhas(COORD posicao, int tamanho_objeto, ARANHA aranhas[], int num_aranhas) {
-    // Verifica a colisao de tiro para cada aranha
-    int i = 0, flag = 0;
-
-    for(i = 0; i < num_aranhas; i++){
-        if (verifica_colisao(posicao, tamanho_objeto, aranhas[i].posicao, TAMANHO_ARANHA) && aranhas[i].status){
-            flag += verifica_colisao(posicao, tamanho_objeto, aranhas[i].posicao, TAMANHO_ARANHA);
-        }
-    }
-
-    return flag;
-}
-
-// Percorre lista de aranhas e elimina a que ocorre colisao com tiro
-void acertou_aranha(COORD posicao, ARANHA aranhas[], int num_aranhas){
-    // Verifica a colisao para cada aranha
-    int i = 0;
-
-    for(i = 0; i < num_aranhas; i++) {
-        if (verifica_colisao(posicao, TAMANHO_TIRO, aranhas[i].posicao, TAMANHO_ARANHA) && aranhas[i].status) {
-            aranhas[i].status = 0;
-        }
-    }
-}
-
-// Verifica impactos do tiro nas bases do cenario e com alguma aranha
-void verifica_impacto_tiro_aranhas(TIRO *tiro, ARANHA aranhas[], int num_aranhas) {
-    if(tiro->posicao.x > LARGURA_TELA - MARGEM_JOGO_X - TAMANHO_TIRO){
-        tiro->status = 0; // Verifica se o jogador ultrapassa a parede da direita
-    } else if(tiro->posicao.x < MARGEM_JOGO_X + DIMENSAO_RETANGULO_BORDA) {
-        tiro->status = 0; // Verifica se o jogador ultrapassa a parede da esquerda
-    } else if(tiro->posicao.y < MARGEM_JOGO_Y + DIMENSAO_RETANGULO_BORDA){
-        tiro->status = 0; // Verifica se o jogador vai acima do 1/4 inferior da tela
-    } else if(tiro->posicao.y > ALTURA_TELA - MARGEM_JOGO_Y - TAMANHO_TIRO){
-        tiro->status = 0; // Verifica se o jogador ultrapassa a parede de baixo
-    } else if(verifica_colisao_tiro_aranhas(tiro->posicao, TAMANHO_TIRO, aranhas, num_aranhas)){
-        tiro->status = 0; // Verifica se o tiro colide com uma aranha e o elimina da tela
-
-        acertou_aranha(tiro->posicao, aranhas, num_aranhas);
-    }
-}
-
-// Verifica a colisao de cada tiro com todas as aranhas presentes em tela
-void verifica_tiros_aranhas(FAZENDEIRO *fazendeiro, ARANHA aranhas[], int num_aranhas){
-    int i;
-
-    for (i = 0; i < NUM_TIROS; i++){
-        if (fazendeiro->tiros[i].status){
-            verifica_impacto_tiro_aranhas(&fazendeiro->tiros[i], aranhas, num_aranhas);
-        }
-    }
-}
-
-// === Fim -> Verificacao de tiro nas aranhas ===

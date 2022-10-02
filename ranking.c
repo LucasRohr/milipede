@@ -3,10 +3,10 @@
 #include <string.h>
 #include "definicoes.h"
 
+// Verifica quantos jogadores lidos tem pontuação diferente de 0, ou seja, são pontuacoes válidas
 int verifica_numero_jogadores(JOGADOR jogadores[]){
     int i, num_jogadores_validos = 0;
 
-    // Verifica quantos jogadores lidos tem pontuação diferente de 0, ou seja, são pontuacoes válidas
     for(i = 0; i < NUM_JOGADORES - 1; i++){
         if(jogadores[i].pontos){
             num_jogadores_validos++;
@@ -16,6 +16,7 @@ int verifica_numero_jogadores(JOGADOR jogadores[]){
     return num_jogadores_validos;
 }
 
+// Salva o arquivo ranking.txt com os rankings dos primeiros 5 jogadores. Devolve 0 se nenhum erro ocorreu.
 int salvar_ranking(JOGADOR jogadores[]){
     FILE *arq;
     int i = 0, erro = 0;
@@ -38,6 +39,7 @@ int salvar_ranking(JOGADOR jogadores[]){
     return erro;
 }
 
+// Carrega o arquivo ranking.txt com os rankings dos primeiros 5 jogadores. Devolve 0 se nenhum erro ocorreu.
 int carregar_ranking(JOGADOR jogadores[]){
     FILE *arq;
     int i = 0, erro = 0;
@@ -64,6 +66,7 @@ int carregar_ranking(JOGADOR jogadores[]){
     return erro;
 }
 
+// Ordena o arranjo de jogadores por ordem de pontuacao
 void ordenar_ranking(JOGADOR jogadores[]){
     JOGADOR buffer;
     int i, j;
@@ -81,8 +84,8 @@ void ordenar_ranking(JOGADOR jogadores[]){
     }
 }
 
+// Se ja esta mostrando o ranking, volta ao jogo. Senao, insere o jogador atual, ordena e mostra o ranking.
 void mostrar_ranking(FAZENDEIRO *fazendeiro, JOGADOR jogadores[], STATUS_JOGO *status_jogo){
-    // Se ja esta mostrando o ranking, volta ao jogo. Senao, insere o jogador atual, ordena e mostra o ranking.
     if(*status_jogo == mostrando_ranking){
         *status_jogo = normal;
     } else {
@@ -90,6 +93,7 @@ void mostrar_ranking(FAZENDEIRO *fazendeiro, JOGADOR jogadores[], STATUS_JOGO *s
     }
 }
 
+// Insere o jogador atual na lista de jogadores. Se ja esta na lista, atualiza sua pontuacao.
 void inserir_jogador_atual(FAZENDEIRO fazendeiro, JOGADOR jogadores[]){
     int i = 0, encontrado = 0;
     JOGADOR jogador_atual;

@@ -9,11 +9,12 @@
 
 #define MOVIMENTO 3
 #define MOVIMENTO_TIRO 6
+#define MULT_TIRO_DIAGONAL 0.707
 
 #define DIMENSAO_RETANGULO_BORDA 5
 #define MARGEM_RETANGULO_BORDA 10
 
-#define MARGEM_JOGO_Y 50 // Margem da �rea do jogo em si (sem barras em cima ou em baixo)
+#define MARGEM_JOGO_Y 50 // Margem da area do jogo em si (sem barras/menus em cima ou em baixo)
 #define MARGEM_JOGO_X 10
 
 #define TAMANHO_FONTE 30

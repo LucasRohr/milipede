@@ -75,7 +75,7 @@ int verifica_movimento_milipede(int segmentos_milipede, COORD posicao, COGUMELO 
 
 // Verifica se a milipede colidiu com a base para eliminar ela e gerar outra
 void testa_colisao_milipede_base(MILIPEDE *milipede, int tam_min_milipede, int tam_max_milipede) {
-    if (milipede->posicao_cabeca.y >= (ALTURA_TELA - MARGEM_JOGO_Y - TAMANHO_SEGMENTO_MILIPEDE)) {
+    if ((milipede->posicao_cabeca.y >= (ALTURA_TELA - MARGEM_JOGO_Y - TAMANHO_SEGMENTO_MILIPEDE)) && milipede->status) {
         milipede->status = 0;
         gera_milipede(milipede, tam_min_milipede, tam_max_milipede);
     }
@@ -92,7 +92,7 @@ void verifica_colisao_milipede_fazendeiro(FAZENDEIRO *fazendeiro, MILIPEDE *mili
         if (fazendeiro->doente){ // Se ja estiver doente, morre
             fazendeiro_morre(fazendeiro, status_jogo);
         // Se nao, paralisa o fazendeiro, deixa ele invulneravel por algum tempo e doente, necessitando
-        // comer o nÃºmero de cogumelos igual ao de segmentos da milipede para sobreviver
+        // comer o número de cogumelos igual ao de segmentos da milipede para sobreviver
         } else {
             fazendeiro->doente = milipede->tamanho ;
             fazendeiro->contador_paralisado = TEMPO_PARALISIA * FRAMERATE;
@@ -137,44 +137,3 @@ void movimenta_milipede(MILIPEDE *milipede, COGUMELO cogumelos[], FAZENDEIRO *fa
 
     testa_colisao_milipede_base(milipede, config_fase.tam_min_milipede, config_fase.tam_max_milipede);
 }
-
-// === Inicio -> Verificacao de tiro na milipede ===
-
-// Diminui um segmento da milipede ou mata ela se nao possui mais segmentos
-void acertou_milipede(MILIPEDE *milipede) {
-    milipede->tamanho -= 1;
-
-    if (milipede->tamanho < 1) {
-        milipede->status = 0;
-    }
-}
-
-// Verifica impactos do tiro nas bases do cenario e com a milipede
-void verifica_impacto_tiro_milipede(TIRO *tiro, MILIPEDE *milipede) {
-    if(tiro->posicao.x > LARGURA_TELA - MARGEM_JOGO_X - TAMANHO_TIRO){
-        tiro->status = 0; // Verifica se o jogador ultrapassa a parede da direita
-    } else if(tiro->posicao.x < MARGEM_JOGO_X + DIMENSAO_RETANGULO_BORDA) {
-        tiro->status = 0; // Verifica se o jogador ultrapassa a parede da esquerda
-    } else if(tiro->posicao.y < MARGEM_JOGO_Y + DIMENSAO_RETANGULO_BORDA){
-        tiro->status = 0; // Verifica se o jogador vai acima do 1/4 inferior da tela
-    } else if(tiro->posicao.y > ALTURA_TELA - MARGEM_JOGO_Y - TAMANHO_TIRO){
-        tiro->status = 0; // Verifica se o jogador ultrapassa a parede de baixo
-    } else if(verifica_colisao(tiro->posicao, TAMANHO_TIRO, milipede->posicao_cabeca, TAMANHO_SEGMENTO_MILIPEDE)){
-        tiro->status = 0; // Verifica se o tiro colide com a cabeca da milipede.
-
-        acertou_milipede(milipede);
-    }
-}
-
-// Verifica a colisao de cada tiro com a milipede
-void verifica_tiros_milipede(FAZENDEIRO *fazendeiro, MILIPEDE *milipede) {
-    int i;
-
-    for (i = 0; i < NUM_TIROS; i++){
-        if (fazendeiro->tiros[i].status){
-            verifica_impacto_tiro_milipede(&fazendeiro->tiros[i], milipede);
-        }
-    }
-}
-
-// === Fim -> Verificacao de tiro na milipede ===

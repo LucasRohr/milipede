@@ -5,6 +5,7 @@
 #include "definicoes.h"
 #include "ranking.h"
 
+// Carrega as texturas do jogo para structs Texture2D da raylib
 void carrega_texturas(Texture2D texturas[]){
     texturas[I_TEXTURA_FAZENDEIRO] = LoadTexture("imagens/fazendeiro.png");
     texturas[I_TEXTURA_COGUMELO] = LoadTexture("imagens/cogumelo.png");
@@ -13,6 +14,7 @@ void carrega_texturas(Texture2D texturas[]){
     texturas[I_TEXTURA_MILIPEDE_CORPO] = LoadTexture("imagens/milipede-corpo.png");
 }
 
+// Descarrega as texturas.
 void descarrega_texturas(Texture2D texturas[]){
     UnloadTexture(texturas[I_TEXTURA_FAZENDEIRO]);
     UnloadTexture(texturas[I_TEXTURA_COGUMELO]);
@@ -21,6 +23,7 @@ void descarrega_texturas(Texture2D texturas[]){
     UnloadTexture(texturas[I_TEXTURA_MILIPEDE_CORPO]);
 }
 
+// Desenha a moldura ao redor da area de jogo.
 void desenha_moldura() {
     int i;
 
@@ -73,6 +76,7 @@ void desenha_menu_inferior(char itens_menu[][TAMANHO_STR], FAZENDEIRO fazendeiro
     }
 }
 
+// Desenha o contador de tempo e cogumelos restantes para curar o fazendeiro.
 void desenha_contador_doente(char itens[][TAMANHO_STR], FAZENDEIRO fazendeiro){
     // Conversao de int para str
     sprintf(itens[0], "%d", fazendeiro.doente);

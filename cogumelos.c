@@ -4,11 +4,13 @@
 #include "definicoes.h"
 #include "colisao.h"
 
+// Gera uma posica aleatoria para os cogumelos. E divisivel pelo tamanho dos cogumelos, para ocuparem posicoes como em uma grade
 int gera_posicao_cogumelos(int valor_minimo, int valor_maximo) {
     // Gera valores aleatorios, divisiveis pelo tamanho dos cogumelos + sua margem (para eles ficarem em seus proprios tiles)
     return (int) (rand() % (valor_maximo - valor_minimo + 1) + valor_minimo) / (TAMANHO_COGUMELO + MARGEM_COGUMELO) * (TAMANHO_COGUMELO + MARGEM_COGUMELO);
 }
 
+// Verifica se a posicao gerada para um cogumelo ja esta ocupada. Devolve 0 se nao.
 int verifica_posicao_cogumelos(COGUMELO cogumelos[], int num_cogumelos, int x, int y){
     // Se as coordenadas recebidas j� est�o ocupadas por um cogumelo, retorna 1, sen�o 0. Para de percorrer o array quando chega ao final, ou encontra o valor 0.
     int i = 0, flag = 0;
@@ -22,9 +24,8 @@ int verifica_posicao_cogumelos(COGUMELO cogumelos[], int num_cogumelos, int x, i
     return flag;
 }
 
-
+// Gera cogumelos em posiçoes aleatórias
 void gera_cogumelos(COGUMELO cogumelos[], int num_cogumelos) {
-    // Gera cogumelos em posicoes aleatorias.
     int i = 0, x, y;
     srand(time(0));
 
@@ -42,29 +43,7 @@ void gera_cogumelos(COGUMELO cogumelos[], int num_cogumelos) {
     }
 }
 
-int verifica_colisao_cogumelos(COORD posicao, int tamanho_objeto, COGUMELO cogumelos[], int num_cogumelos){
-    // Verifica a colisao para cada cogumelo.
-    int i = 0, flag = 0;
-
-    for(i = 0; i < num_cogumelos; i++){
-        if (verifica_colisao(posicao, tamanho_objeto, cogumelos[i].posicao, TAMANHO_COGUMELO) && cogumelos[i].status){
-            flag += verifica_colisao(posicao, tamanho_objeto, cogumelos[i].posicao, TAMANHO_COGUMELO);
-        }
-    }
-    return flag;
-}
-
-void acertou_cogumelo(COORD posicao, COGUMELO cogumelos[], int num_cogumelos){
-    // Verifica a colisao para cada cogumelo.
-    int i = 0;
-
-    for(i = 0; i < num_cogumelos; i++){
-        if (verifica_colisao(posicao, TAMANHO_TIRO, cogumelos[i].posicao, TAMANHO_COGUMELO) && cogumelos[i].status){
-            cogumelos[i].status = 0;
-        }
-    }
-}
-
+// Devolve o numero de cogumelos ainda no mapa.
 int conta_cogumelos_restantes(COGUMELO cogumelos[], int num_cogumelos) {
     int i, contador = 0;
 

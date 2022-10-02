@@ -2,9 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "definicoes.h"
+#include "aranhas.h"
 #include "colisao.h"
 #include "cogumelos.h"
+#include "milipede.h"
 
+// Instancia o fazendeiro
 void gera_fazendeiro(FAZENDEIRO *fazendeiro) {
     fazendeiro->posicao.x = LARGURA_TELA / 2;
     fazendeiro->posicao.y = ALTURA_TELA - MARGEM_JOGO_Y - DIMENSAO_RETANGULO_BORDA - TAMANHO_JOGADOR;
@@ -18,6 +21,7 @@ void gera_fazendeiro(FAZENDEIRO *fazendeiro) {
     fazendeiro->contador_doente = 0;
 }
 
+// Atira um tiro da posicao atual do jogador, diminui os tiros restantes do jogador e ativa o cooldown entre tiros.
 void atirar(FAZENDEIRO *fazendeiro){
     int tiro_atual = NUM_TIROS - fazendeiro->tiros_restantes;
 
@@ -29,7 +33,8 @@ void atirar(FAZENDEIRO *fazendeiro){
     fazendeiro->cooldown_tiro = TEMPO_COOLDOWN_TIRO * FRAMERATE;
 }
 
-void verifica_impacto_tiro(TIRO *tiro, int *cogumelos_colhidos, int *doente, COGUMELO cogumelos[], int num_cogumelos){
+// Funcao para verificar a colisao de um tiro com objetos. (paredes, cogumelos, aranhas, milipede)
+void verifica_impacto_tiro(TIRO *tiro, int *cogumelos_colhidos, int *doente, COGUMELO cogumelos[], ARANHA aranhas[], MILIPEDE *milipede, CONFIG_FASE config_fase){
     if(tiro->posicao.x > LARGURA_TELA - MARGEM_JOGO_X - TAMANHO_TIRO){
         tiro->status = 0; // Verifica se o jogador ultrapassa a parede da direita
     } else if(tiro->posicao.x < MARGEM_JOGO_X + DIMENSAO_RETANGULO_BORDA) {
@@ -38,27 +43,36 @@ void verifica_impacto_tiro(TIRO *tiro, int *cogumelos_colhidos, int *doente, COG
         tiro->status = 0; // Verifica se o jogador vai acima do 1/4 inferior da tela
     } else if(tiro->posicao.y > ALTURA_TELA - MARGEM_JOGO_Y - TAMANHO_TIRO){
         tiro->status = 0; // Verifica se o jogador ultrapassa a parede de baixo
-    } else if(verifica_colisao_cogumelos(tiro->posicao, TAMANHO_TIRO, cogumelos, num_cogumelos)){
+    } else if(verifica_colisao_cogumelos(tiro->posicao, TAMANHO_TIRO, cogumelos, config_fase.num_cogumelos)){
         tiro->status = 0; // Verifica se o tiro colide com algum cogumelo.
-        acertou_cogumelo(tiro->posicao, cogumelos, num_cogumelos);
-        if(*doente) {
+        acertou_cogumelo(tiro->posicao, cogumelos, config_fase.num_cogumelos);
+        if(*doente) { // Se o jogador esta doente, diminui o numero de cogumelos restantes para e curar. Se nao, ganha um ponto
             *doente -= 1;
         } else {
             *cogumelos_colhidos += 1;
         }
+    } else if(verifica_colisao_tiro_aranhas(tiro->posicao, TAMANHO_TIRO, aranhas, config_fase.num_aranhas)){
+        tiro->status = 0; // Verifica se o tiro colide com uma aranha e o elimina da tela
+        acertou_aranha(tiro->posicao, aranhas, config_fase.num_aranhas);
+    } else if(verifica_colisao(tiro->posicao, TAMANHO_TIRO, milipede->posicao_cabeca, TAMANHO_SEGMENTO_MILIPEDE)){
+        tiro->status = 0; // Verifica se o tiro colide com a cabeca da milipede.
+
+        acertou_milipede(milipede);
     }
 }
 
-void verifica_tiros(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], int num_cogumelos){
+// Funcao que chama verifica_impacto_tiro para cada tiro do arranjo.
+void verifica_tiros(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[], MILIPEDE *milipede, CONFIG_FASE config_fase){
     int i;
 
     for (i = 0; i < NUM_TIROS; i++){
         if (fazendeiro->tiros[i].status){
-            verifica_impacto_tiro(&fazendeiro->tiros[i], &fazendeiro->cogumelos_colhidos, &fazendeiro->doente, cogumelos, num_cogumelos);
+            verifica_impacto_tiro(&fazendeiro->tiros[i], &fazendeiro->cogumelos_colhidos, &fazendeiro->doente, cogumelos, aranhas, milipede, config_fase);
         }
     }
 }
 
+// Funcao para reinstanciar o jogador apos uma morte. Revive com uma vida a menos, e mesma quantidade de tiros que tinha antes da morte.
 void revive_fazendeiro(FAZENDEIRO *fazendeiro){
     fazendeiro->posicao.x = LARGURA_TELA / 2;
     fazendeiro->posicao.y = ALTURA_TELA - MARGEM_JOGO_Y - DIMENSAO_RETANGULO_BORDA - TAMANHO_JOGADOR;
@@ -72,6 +86,7 @@ void revive_fazendeiro(FAZENDEIRO *fazendeiro){
     fazendeiro->contador_doente = 0;
 }
 
+// Se o fazendeiro ainda tem vidas extras, revive o fazendeiro. Senao, morre e o status do jogo vai para game over.
 void fazendeiro_morre(FAZENDEIRO *fazendeiro, STATUS_JOGO *status_jogo){
     if(fazendeiro->vidas > 1){
         revive_fazendeiro(fazendeiro);
@@ -81,8 +96,8 @@ void fazendeiro_morre(FAZENDEIRO *fazendeiro, STATUS_JOGO *status_jogo){
     }
 }
 
+// Atualiza os contadores do fazendeiro frame a frame. (cooldown de tiro, paralisia, invulnerabilidade, etc.)
 void atualiza_status_fazendeiro(FAZENDEIRO *fazendeiro, STATUS_JOGO *status_jogo){
-    // Diminui os contadores uma vez por frame
     if (fazendeiro->cooldown_tiro){
         fazendeiro->cooldown_tiro--;
     }
@@ -105,9 +120,10 @@ void atualiza_status_fazendeiro(FAZENDEIRO *fazendeiro, STATUS_JOGO *status_jogo
 
 }
 
+// Movimenta todos os tiros ativos na sua direcao.
 void movimenta_tiros(TIRO tiros[]){
     int i;
-    int mov_diagonal = MOVIMENTO_TIRO * 0.707;
+    int mov_diagonal = MOVIMENTO_TIRO * MULT_TIRO_DIAGONAL;
 
     for (i=0; i < NUM_TIROS; i++){
         if(tiros[i].status){
@@ -147,9 +163,8 @@ void movimenta_tiros(TIRO tiros[]){
     }
 }
 
+// Verifica se um movimento do jogador e possivel. Recebe a nova posicao, nao a atual. Devolve 0 se nao, 1 se sim.
 int verifica_movimento_jogador(COORD posicao, COGUMELO cogumelos[], int num_cogumelos){
-    // Verifica se � poss�vel o jogador fazer algum movimento. Recebe a nova posicao, nao a atual.
-    // Retorna 1 se o movimento � poss�vel, 0 se n�o
     int flag = 1;
 
     if(posicao.x > LARGURA_TELA - MARGEM_JOGO_X - TAMANHO_JOGADOR){
@@ -167,6 +182,7 @@ int verifica_movimento_jogador(COORD posicao, COGUMELO cogumelos[], int num_cogu
     return flag;
 }
 
+// Muda a direcao do jogador, dependendo das teclas apertadas no momento.
 void muda_direcao_jogador(DIRECAO *direcao){
     if(IsKeyDown(KEY_RIGHT) && IsKeyDown(KEY_UP)){
         *direcao = dir_cima;
@@ -187,6 +203,7 @@ void muda_direcao_jogador(DIRECAO *direcao){
     }
 }
 
+// Movimenta o jogador, lendo inputs do teclado
 void movimenta_jogador(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], int num_cogumelos) {
     // Funcao para movimentar o jogador.
     COORD nova_posicao = {};
@@ -223,8 +240,8 @@ void movimenta_jogador(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], int num_cog
     muda_direcao_jogador(&fazendeiro->direcao);
 }
 
+// Le comandos do jogador, que nao sao as teclas de movimento
 void comandos_jogador(FAZENDEIRO *fazendeiro, ARANHA aranhas[], COGUMELO cogumelos[], int num_cogumelos, JOGADOR jogadores[], STATUS_JOGO *status_jogo){
-    // Funcao para ler inputs do jogador que nao sao as teclas de movimento
 
     switch(GetKeyPressed()) {
 

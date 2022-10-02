@@ -7,12 +7,13 @@
 #include "saves.h"
 #include "ranking.h"
 
+// Funcao para o menu de pausa. Chama a funcao de desenho do menu, e de instanciamento de nome para fazer um save
 void menu_pausa(char texto[], FAZENDEIRO *fazendeiro, ARANHA aranhas[], MILIPEDE *milipede, COGUMELO cogumelos[], CONFIG_FASE *config_fase, STATUS_JOGO *status_jogo, char input[], int *num_letras){
     desenha_menu_pausa(texto, input);
 
     if(instanciar_nome(input, num_letras)){ // Verifica se o jogador acabou de digitar o nome para salvar o jogo e instanciar o nome do fazendeiro
         strcpy(fazendeiro->nome, input);
-        if(!salvar_jogo(*fazendeiro, aranhas, *milipede, cogumelos, *config_fase)){
+        if(salvar_jogo(*fazendeiro, aranhas, *milipede, cogumelos, *config_fase)){
             printf("\n\nErro ao salvar jogo.\n\n");
         }
         *status_jogo = normal;
@@ -20,6 +21,7 @@ void menu_pausa(char texto[], FAZENDEIRO *fazendeiro, ARANHA aranhas[], MILIPEDE
 
 }
 
+// Funcao para o menu de saida. Chama a funcao de desenho do menu, e de instanciamento de nome para salvar ranking
 void menu_sair(char texto[], FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char input[], int *num_letras, STATUS_JOGO *status_jogo, int *sair) {
     desenha_menu_pausa(texto, input);
 
@@ -34,15 +36,19 @@ void menu_sair(char texto[], FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char i
     }
 }
 
+// Funcao para o menu de carregamento. Chama a funcao de desenho do menu, e de instanciamento de nome para carregar um save
 void menu_carregar(char texto[], FAZENDEIRO *fazendeiro, ARANHA aranhas[], MILIPEDE *milipede, COGUMELO cogumelos[], CONFIG_FASE *config_fase, STATUS_JOGO *status_jogo, char input[], int *num_letras){
     desenha_menu_pausa(texto, input);
 
     if(instanciar_nome(input, num_letras)){ // Verifica se o jogador acabou de digitar o nome para carregar o jogo
-        carregar_jogo(fazendeiro, aranhas, milipede, cogumelos, config_fase, input);
+        if(carregar_jogo(fazendeiro, aranhas, milipede, cogumelos, config_fase, input)){
+            printf("\n\nErro ao carregar jogo.\n\n");
+        }
         *status_jogo = normal;
     }
 }
 
+// Funcao para o menu de game over. Chama a funcao de desenho do menu, e de instanciamento de nome para salvar ranking
 void menu_game_over(char texto[], FAZENDEIRO *fazendeiro, JOGADOR jogadores[], char input[], int *num_letras, STATUS_JOGO *status_jogo, int *sair){
     desenha_menu_pausa(texto, input);
 
@@ -57,6 +63,7 @@ void menu_game_over(char texto[], FAZENDEIRO *fazendeiro, JOGADOR jogadores[], c
     }
 }
 
+// Funcao para o menu de inicio da fase. Chama a funcao de desenho do menu, e diminui o contador de duracao a cada frame
 void menu_inicio_fase(STATUS_JOGO *status_jogo, int fase, int *contador){
     char texto[TAMANHO_STR] = "Fase ";
     char num_fase[2] = {fase + '0', '\0'};
@@ -74,7 +81,7 @@ void menu_inicio_fase(STATUS_JOGO *status_jogo, int fase, int *contador){
     }
 }
 
-
+// Funcao para instancia o nome do jogador.
 int instanciar_nome(char input[], int *num_letras){
     int tecla = GetCharPressed();
 
