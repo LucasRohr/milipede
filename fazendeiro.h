@@ -1,7 +1,5 @@
 void gera_fazendeiro(FAZENDEIRO *fazendeiro);
 void atirar(FAZENDEIRO *fazendeiro);
-void verifica_impacto_tiro(TIRO *tiro, int *cogumelos_colhidos, int *doente, COGUMELO cogumelos[], ARANHA aranhas[], MILIPEDE *milipede, CONFIG_FASE config_fase);
-void verifica_tiros(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[], MILIPEDE *milipede, CONFIG_FASE config_fase);
 void revive_fazendeiro(FAZENDEIRO *fazendeiro);
 void fazendeiro_morre(FAZENDEIRO *fazendeiro, STATUS_JOGO *status_jogo);
 void atualiza_status_fazendeiro(FAZENDEIRO *fazendeiro, STATUS_JOGO *status_jogo);

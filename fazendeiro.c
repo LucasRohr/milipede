@@ -33,45 +33,6 @@ void atirar(FAZENDEIRO *fazendeiro){
     fazendeiro->cooldown_tiro = TEMPO_COOLDOWN_TIRO * FRAMERATE;
 }
 
-// Funcao para verificar a colisao de um tiro com objetos. (paredes, cogumelos, aranhas, milipede)
-void verifica_impacto_tiro(TIRO *tiro, int *cogumelos_colhidos, int *doente, COGUMELO cogumelos[], ARANHA aranhas[], MILIPEDE *milipede, CONFIG_FASE config_fase){
-    if(tiro->posicao.x > LARGURA_TELA - MARGEM_JOGO_X - TAMANHO_TIRO){
-        tiro->status = 0; // Verifica se o jogador ultrapassa a parede da direita
-    } else if(tiro->posicao.x < MARGEM_JOGO_X + DIMENSAO_RETANGULO_BORDA) {
-        tiro->status = 0; // Verifica se o jogador ultrapassa a parede da esquerda
-    } else if(tiro->posicao.y < MARGEM_JOGO_Y + DIMENSAO_RETANGULO_BORDA){
-        tiro->status = 0; // Verifica se o jogador vai acima do 1/4 inferior da tela
-    } else if(tiro->posicao.y > ALTURA_TELA - MARGEM_JOGO_Y - TAMANHO_TIRO){
-        tiro->status = 0; // Verifica se o jogador ultrapassa a parede de baixo
-    } else if(verifica_colisao_cogumelos(tiro->posicao, TAMANHO_TIRO, cogumelos, config_fase.num_cogumelos)){
-        tiro->status = 0; // Verifica se o tiro colide com algum cogumelo.
-        acertou_cogumelo(tiro->posicao, cogumelos, config_fase.num_cogumelos);
-        if(*doente) { // Se o jogador esta doente, diminui o numero de cogumelos restantes para e curar. Se nao, ganha um ponto
-            *doente -= 1;
-        } else {
-            *cogumelos_colhidos += 1;
-        }
-    } else if(verifica_colisao_tiro_aranhas(tiro->posicao, TAMANHO_TIRO, aranhas, config_fase.num_aranhas)){
-        tiro->status = 0; // Verifica se o tiro colide com uma aranha e o elimina da tela
-        acertou_aranha(tiro->posicao, aranhas, config_fase.num_aranhas);
-    } else if(verifica_colisao(tiro->posicao, TAMANHO_TIRO, milipede->posicao_cabeca, TAMANHO_SEGMENTO_MILIPEDE)){
-        tiro->status = 0; // Verifica se o tiro colide com a cabeca da milipede.
-
-        acertou_milipede(milipede);
-    }
-}
-
-// Funcao que chama verifica_impacto_tiro para cada tiro do arranjo.
-void verifica_tiros(FAZENDEIRO *fazendeiro, COGUMELO cogumelos[], ARANHA aranhas[], MILIPEDE *milipede, CONFIG_FASE config_fase){
-    int i;
-
-    for (i = 0; i < NUM_TIROS; i++){
-        if (fazendeiro->tiros[i].status){
-            verifica_impacto_tiro(&fazendeiro->tiros[i], &fazendeiro->cogumelos_colhidos, &fazendeiro->doente, cogumelos, aranhas, milipede, config_fase);
-        }
-    }
-}
-
 // Funcao para reinstanciar o jogador apos uma morte. Revive com uma vida a menos, e mesma quantidade de tiros que tinha antes da morte.
 void revive_fazendeiro(FAZENDEIRO *fazendeiro){
     fazendeiro->posicao.x = LARGURA_TELA / 2;
